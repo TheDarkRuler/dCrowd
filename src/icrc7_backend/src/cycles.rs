@@ -7,7 +7,7 @@ pub struct WalletReceiveResult {
 
 #[query(name = "wallet_balance")]
 pub fn wallet_balance() -> candid::Nat {
-    return candid::Nat::from(ic_cdk::api::canister_balance128());
+    candid::Nat::from(ic_cdk::api::canister_balance128())
 }
 
 #[update(name = "wallet_receive")]

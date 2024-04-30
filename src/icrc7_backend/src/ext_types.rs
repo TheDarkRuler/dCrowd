@@ -46,7 +46,7 @@ impl TokenIdentifier {
             .as_slice()
             .to_vec();
         // ic_cdk::println!("parse_token_identifier {:?}", array);
-        if array.len() <= 4 || &array[0..4] != TDS {
+        if array.len() <= 4 || array[0..4] != TDS {
             return (array, 0);
         }
         if array.len() <= 8 {
@@ -63,6 +63,7 @@ impl TokenIdentifier {
 }
 
 #[derive(CandidType, Clone, Copy, Debug, Deserialize)]
+#[derive(Default)]
 pub struct AccountIdentifier([u8; 32]);
 
 pub type AccountIdentifierHex = String;
@@ -96,11 +97,7 @@ impl AccountIdentifier {
     }
 }
 
-impl Default for AccountIdentifier {
-    fn default() -> Self {
-        AccountIdentifier([0u8; 32])
-    }
-}
+
 
 #[derive(CandidType, Clone, Deserialize)]
 pub enum User {

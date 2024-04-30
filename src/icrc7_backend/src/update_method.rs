@@ -43,7 +43,7 @@ pub fn icrc7_approve(args: Vec<ApprovalArg>) -> Vec<Option<ApproveResult>> {
 #[update(guard = "owner_guard")]
 pub fn icrc7_set_minting_authority(minting_account: Account) -> bool {
     STATE.with(|s| s.borrow_mut().minting_authority = Some(minting_account));
-    return true;
+    true
 }
 
 #[update(guard = "owner_guard")]
@@ -53,14 +53,14 @@ pub fn icrc7_set_archive_log_canister(arg: Principal) -> bool {
         state.archive_log_canister = Some(arg);
     });
 
-    return true;
+    true
 }
 
 #[update(guard = "owner_guard")]
 pub async fn icrc7_archive_logs() -> SyncReceipt {
     let archive_log_canister = STATE
         .with(|s| s.borrow().get_archive_log_canister())
-        .ok_or_else(|| InsertTransactionError::NotSetArchiveCanister)?;
+        .ok_or(InsertTransactionError::NotSetArchiveCanister)?;
 
     // check sync pending
     let sync_pending_txn_ids = STATE.with(|s| s.borrow().get_sync_pending_txn_ids());
