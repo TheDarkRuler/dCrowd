@@ -1,5 +1,5 @@
 [package]
-name = "icrc7_backend"
+name = "icrc7"
 version = "0.1.0"
 edition = "2021"
 

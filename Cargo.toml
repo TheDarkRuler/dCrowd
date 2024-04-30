@@ -1,5 +1,5 @@
 [workspace]
 members = [
-    "src/icrc7_backend"
+    "src/icrc7"
 ]
 resolver = "2"
