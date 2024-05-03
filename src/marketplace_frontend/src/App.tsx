@@ -1,40 +1,28 @@
-import { Actor, ActorMethod, HttpAgent } from "@dfinity/agent";
+import { HttpAgent, Identity, Agent, ActorSubclass } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/agent/lib/cjs/index";
 import { AuthClient } from "@dfinity/auth-client";
-import type { Principal } from "@dfinity/principal";
+import { createActor } from '../../declarations/icrc7';
+import { createActor as createFactoryActor } from "../../declarations/factory";
 import { isSafari } from 'react-device-detect';
-
-// @ts-ignore
-export const init = ({ IDL }) => {
-  return [];
-};
-
-export interface _SERVICE {
-  whoami: ActorMethod<[], Principal>;
-}
+import { useState } from "react";
+import { _SERVICE as FACSERVICES } from "../../declarations/factory/factory.did";
+import { _SERVICE as ICRCSERVICE} from "../../declarations/icrc7/icrc7.did";
 
 function App() {
-  const webapp_id = process.env.CANISTER_ID_ICRC7;
-
-  // @ts-ignore - The interface of the whoami canister
-  const webapp_idl = ({ IDL }) => {
-    return IDL.Service({ whoami: IDL.Func([], [IDL.Principal], ["query"]) });
-  };
 
   // The <canisterId>.localhost URL is used as opposed to setting the canister id as a parameter
   // since the latter is brittle with regards to transitively loaded resources.
   const local_ii_url = isSafari ? 
-    `http://127.0.0.1:4943/?canisterId=${process.env.CANISTER_ID_INTERNET_IDENTITY}` : 
+    `http://127.0.0.1:4943/?canisterId=${process.env.CANISTER_ID_INTERNET_IDENTITY}`: 
     `http://${process.env.CANISTER_ID_INTERNET_IDENTITY}.localhost:4943/`;
 
   let iiUrl: string;
+  let agent: Agent;
+  let actorFactory: ActorSubclass<FACSERVICES>;
+  let actorIcrc7: ActorSubclass<ICRCSERVICE>;
 
-  if (process.env.DFX_NETWORK === "local") {
+  process.env.DFX_NETWORK === "ic" ?
+    iiUrl = `https://${process.env.CANISTER_ID_INTERNET_IDENTITY}.ic0.app`: 
     iiUrl = local_ii_url;
-  } else if (process.env.DFX_NETWORK === "ic") {
-    iiUrl = `https://${process.env.CANISTER_ID_INTERNET_IDENTITY}.ic0.app`;
-  } else {
-    iiUrl = local_ii_url;
-  }
 
   async function handleLogin() {
       // When the user clicks, we start the login process.
@@ -43,6 +31,7 @@ function App() {
 
       // Find out which URL should be used for login.
       const iiUrl = document.querySelector<HTMLInputElement>("#iiUrl")!.value;
+      const canisterFactoryId = process.env.CANISTER_ID_FACTORY;
 
       // Call authClient.login(...) to login with Internet Identity. This will open a new tab
       // with the login prompt. The code has to wait for the login process to complete.
@@ -58,17 +47,54 @@ function App() {
       // At this point we're authenticated, and we can get the identity from the auth client:
       const identity = authClient.getIdentity();
       // Using the identity obtained from the auth client, we can create an agent to interact with the IC.
-      const agent = new HttpAgent({ identity } as any);
       // Using the interface description of our webapp, we create an actor that we use to call the service methods.
-      
-      /*const webapp: _SERVICE = Actor.createActor(webapp_idl, {
+
+      agent = new HttpAgent({ identity: identity as unknown as Identity });
+
+      actorFactory = createFactoryActor(canisterFactoryId as string, {
+        agent
+      });
+
+      let icpc7Id = await actorFactory.mint_collection_canister({    
+        icrc7_symbol: "c",
+        icrc7_name: "aasd",
+        icrc7_description: [],
+        icrc7_logo: [],
+        icrc7_supply_cap: [],
+        icrc7_max_query_batch_size: [],
+        icrc7_max_update_batch_size: [],
+        icrc7_max_take_value: [],
+        icrc7_default_take_value: [],
+        icrc7_max_memo_size: [],
+        icrc7_atomic_batch_transfers: [],
+        tx_window: [],
+        permitted_drift: []
+      });
+
+      if ("Err" in icpc7Id) {
+        return;
+      }
+      const canisterIcircId = icpc7Id.Ok;
+
+      actorIcrc7 = createActor(canisterIcircId, {
         agent,
-        canisterId: webapp_id!,
-      });*/
+      });
 
       // Call whoami which returns the principal (user id) of the current user.
       // show the principal on the page
-      document.getElementById("loginStatus")!.innerText = "logged in";
+      
+      let result = await actorIcrc7.icrc7_mint({to: {owner: identity.getPrincipal(), subaccount: []}, token_id: BigInt(12), memo: [], 
+        from_subaccount: [], token_description: [], token_logo: [], token_name: []}).then((a) => {
+          //document.getElementById("loginStatus")!.innerText = icrc7.Result
+          console.log(a)
+          console.log(identity.getPrincipal().toString())
+        });
+      console.log(result);
+  }
+
+  async function lesgo() {
+    console.log(await actorFactory.get_principal())
+    console.log(await actorIcrc7.icrc7_token_metadata([BigInt(12)]))
   }
 
   return (
@@ -80,6 +106,7 @@ function App() {
       </section>
       <section>
         <button id="loginBtn" onClick={handleLogin}>Login with Internet Identity</button>
+        <button id="loginBtn" onClick={lesgo}>Login with Internet Identity</button>
       </section>
       <section id="loginStatus">
         <p>Not logged in</p>
