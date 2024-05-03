@@ -1,13 +1,18 @@
-import { HttpAgent, Identity, Agent, ActorSubclass } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/agent/lib/cjs/index";
+import { HttpAgent, Identity, Agent } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/agent/lib/cjs/index";
 import { AuthClient } from "@dfinity/auth-client";
-import { createActor } from '../../declarations/icrc7';
-import { createActor as createFactoryActor } from "../../declarations/factory";
+import { createActor, icrc7 } from '../../declarations/icrc7';
+import { createActor as createFactoryActor, factory } from "../../declarations/factory";
 import { isSafari } from 'react-device-detect';
 import { useState } from "react";
-import { _SERVICE as FACSERVICES } from "../../declarations/factory/factory.did";
-import { _SERVICE as ICRCSERVICE} from "../../declarations/icrc7/icrc7.did";
 
 function App() {
+
+  const [identity, setIdentity] = useState<Identity>();
+  const [iiUrl, setIiUrl] = useState("");
+  const [agent, setAgent] = useState<Agent>();
+  const [actorFactory, setActorFactory] = useState(factory);
+  const [actorIcrc7, setActorIcrc7] = useState(icrc7);
+
 
   // The <canisterId>.localhost URL is used as opposed to setting the canister id as a parameter
   // since the latter is brittle with regards to transitively loaded resources.
@@ -15,14 +20,10 @@ function App() {
     `http://127.0.0.1:4943/?canisterId=${process.env.CANISTER_ID_INTERNET_IDENTITY}`: 
     `http://${process.env.CANISTER_ID_INTERNET_IDENTITY}.localhost:4943/`;
 
-  let iiUrl: string;
-  let agent: Agent;
-  let actorFactory: ActorSubclass<FACSERVICES>;
-  let actorIcrc7: ActorSubclass<ICRCSERVICE>;
 
-  process.env.DFX_NETWORK === "ic" ?
-    iiUrl = `https://${process.env.CANISTER_ID_INTERNET_IDENTITY}.ic0.app`: 
-    iiUrl = local_ii_url;
+  setIiUrl(process.env.DFX_NETWORK === "ic" ?
+    `https://${process.env.CANISTER_ID_INTERNET_IDENTITY}.ic0.app`: 
+    local_ii_url);
 
   async function handleLogin() {
       // When the user clicks, we start the login process.
@@ -45,56 +46,65 @@ function App() {
       });
 
       // At this point we're authenticated, and we can get the identity from the auth client:
-      const identity = authClient.getIdentity();
+      setIdentity(authClient.getIdentity());
       // Using the identity obtained from the auth client, we can create an agent to interact with the IC.
       // Using the interface description of our webapp, we create an actor that we use to call the service methods.
 
-      agent = new HttpAgent({ identity: identity as unknown as Identity });
+      setAgent(new HttpAgent({ identity: identity as unknown as Identity }));
 
-      actorFactory = createFactoryActor(canisterFactoryId as string, {
+      setActorFactory(createFactoryActor(canisterFactoryId as string, {
         agent
-      });
-
-      let icpc7Id = await actorFactory.mint_collection_canister({    
-        icrc7_symbol: "c",
-        icrc7_name: "aasd",
-        icrc7_description: [],
-        icrc7_logo: [],
-        icrc7_supply_cap: [],
-        icrc7_max_query_batch_size: [],
-        icrc7_max_update_batch_size: [],
-        icrc7_max_take_value: [],
-        icrc7_default_take_value: [],
-        icrc7_max_memo_size: [],
-        icrc7_atomic_batch_transfers: [],
-        tx_window: [],
-        permitted_drift: []
-      });
-
-      if ("Err" in icpc7Id) {
-        return;
-      }
-      const canisterIcircId = icpc7Id.Ok;
-
-      actorIcrc7 = createActor(canisterIcircId, {
-        agent,
-      });
+      }));
 
       // Call whoami which returns the principal (user id) of the current user.
       // show the principal on the page
       
-      let result = await actorIcrc7.icrc7_mint({to: {owner: identity.getPrincipal(), subaccount: []}, token_id: BigInt(12), memo: [], 
-        from_subaccount: [], token_description: [], token_logo: [], token_name: []}).then((a) => {
-          //document.getElementById("loginStatus")!.innerText = icrc7.Result
-          console.log(a)
-          console.log(identity.getPrincipal().toString())
-        });
-      console.log(result);
+
   }
 
-  async function lesgo() {
+  async function display_canister() {
     console.log(await actorFactory.get_principal())
-    console.log(await actorIcrc7.icrc7_token_metadata([BigInt(12)]))
+  }
+  
+  async function mint() {
+    let result = await actorIcrc7.icrc7_mint({to: {owner: identity!.getPrincipal(), subaccount: []}, token_id: BigInt(12), memo: [], 
+      from_subaccount: [], token_description: [], token_logo: [], token_name: []}).then((a) => {
+        //document.getElementById("loginStatus")!.innerText = icrc7.Result
+        console.log(a)
+        console.log(identity!.getPrincipal().toString())
+      });
+    console.log(result);
+  }
+
+  async function changeCollection() {
+
+    const canisterIcircId = document.querySelector<HTMLInputElement>("#canisterID")!.value
+    console.log(canisterIcircId);
+    setActorIcrc7(createActor(canisterIcircId, {
+      agent,
+    }));
+  }
+
+  async function createCanister() {
+    let _ = await actorFactory.mint_collection_canister({    
+      icrc7_symbol: "c",
+      icrc7_name: "aasd",
+      icrc7_description: [],
+      icrc7_logo: [],
+      icrc7_supply_cap: [],
+      icrc7_max_query_batch_size: [],
+      icrc7_max_update_batch_size: [],
+      icrc7_max_take_value: [],
+      icrc7_default_take_value: [],
+      icrc7_max_memo_size: [],
+      icrc7_atomic_batch_transfers: [],
+      tx_window: [],
+      permitted_drift: []
+    });
+  }
+  
+  function lesgo() {
+
   }
 
   return (
@@ -105,8 +115,29 @@ function App() {
         <input size={50} id="iiUrl" type="text" value={iiUrl} readOnly/>
       </section>
       <section>
-        <button id="loginBtn" onClick={handleLogin}>Login with Internet Identity</button>
-        <button id="loginBtn" onClick={lesgo}>Login with Internet Identity</button>
+        <button onClick={handleLogin}>Login with Internet Identity</button><br/><br/>
+        <button onClick={createCanister}>create canister</button><br/><br/>
+        <button onClick={display_canister}>display all your canisters</button><br/><br/>
+        <button onClick={lesgo}>get all nfts</button><br/><br/>
+        <button onClick={lesgo}>show token metadata</button><br/><br/>
+        <button onClick={lesgo}>minting authority</button><br/><br/>
+        <button onClick={lesgo}>supply cap</button><br/><br/>
+        <button onClick={lesgo}>total supply</button><br/><br/>
+        <button onClick={lesgo}>transfer</button><br/><br/>
+        <button onClick={lesgo}>supported standard</button><br/><br/>
+        <button onClick={lesgo}>burn</button><br/><br/>
+        <button onClick={lesgo}>balance of</button><br/><br/>
+        <button onClick={lesgo}>logo</button><br/><br/>
+        <button onClick={lesgo}>name</button><br/><br/>
+        <button onClick={lesgo}>description</button><br/><br/>
+        <button onClick={mint}>mint</button><br/><br/>
+        <button onClick={lesgo}>name</button><br/><br/>
+        <button onClick={lesgo}>set minting authority</button><br/><br/>
+        <button onClick={lesgo}>owner of</button><br/><br/>
+        <button onClick={lesgo}>approve</button><br/><br/>
+        <input id="canisterID" type="text"/><br/>
+        <button onClick={changeCollection}>set collection</button><br/><br/>
+
       </section>
       <section id="loginStatus">
         <p>Not logged in</p>
