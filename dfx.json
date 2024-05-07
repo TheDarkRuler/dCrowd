@@ -25,7 +25,8 @@
     },
     "marketplace_frontend": {
       "dependencies": [
-        "internet_identity"
+        "internet_identity",
+        "factory"
       ],
       "source": [
         "src/marketplace_frontend/dist"

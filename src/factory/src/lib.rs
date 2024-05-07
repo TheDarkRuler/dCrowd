@@ -1,6 +1,7 @@
 pub mod common;
 pub mod memory;
 
+use crate::common::guards::caller_is_auth;
 use crate::common::structures::InitArg;
 use crate::common::structures::Arg;
 use candid::{Encode, Principal};
@@ -14,12 +15,9 @@ use memory::insert_record;
 
 pub const ICRC7_WASM: &[u8] = std::include_bytes!("../../../wasm_files/icrc7.wasm");
 
-#[ic_cdk::update]
+#[ic_cdk::update(guard = "caller_is_auth")]
 async fn mint_collection_canister(arg: Arg) -> Result<String, String> {
     let caller = ic_cdk::caller();
-    if caller == Principal::anonymous() {
-        return Err("Anonymous Caller".into());
-    }
     let account = Account {
         owner: caller.clone(),
         subaccount: None,
@@ -59,7 +57,7 @@ async fn mint_collection_canister(arg: Arg) -> Result<String, String> {
     }
 }
 
-#[ic_cdk::query]
+#[ic_cdk::query(guard = "caller_is_auth")]
 fn get_principal() -> Result<Vec<String>, String> {
     let caller: Principal = ic_cdk::caller();
     let res = get_records().iter().filter(|x| *x.1 == caller).map(|x| x.0.to_string()).collect::<Vec<String>>();
