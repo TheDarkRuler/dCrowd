@@ -1,14 +1,14 @@
 import { HttpAgent, Identity, Agent } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/agent/lib/cjs/index";
 import { AuthClient } from "@dfinity/auth-client";
 import { createActor, icrc7 } from '../../declarations/icrc7';
-import { createActor as createFactoryActor, factory } from "../../declarations/factory";
+import { createActor as createBackendActor, marketplace_backend } from "../../declarations/marketplace_backend";
 import { isSafari } from 'react-device-detect';
 
 function App() {
 
   let identity: Identity;
   let agent: Agent;
-  let actorFactory = factory;
+  let actorBackend = marketplace_backend;
   let actorIcrc7 = icrc7;
 
 
@@ -30,7 +30,7 @@ function App() {
 
       // Find out which URL should be used for login.
       const iiUrl = document.querySelector<HTMLInputElement>("#iiUrl")!.value;
-      const canisterFactoryId = process.env.CANISTER_ID_FACTORY;
+      const canisterBackendId = process.env.CANISTER_ID_MARKETPLACE_BACKEND;
 
       // Call authClient.login(...) to login with Internet Identity. This will open a new tab
       // with the login prompt. The code has to wait for the login process to complete.
@@ -50,7 +50,7 @@ function App() {
 
       agent = new HttpAgent({ identity: identity as unknown as Identity });
 
-      actorFactory = createFactoryActor(canisterFactoryId as string, {
+      actorBackend = createBackendActor(canisterBackendId as string, {
         agent
       });
 
@@ -61,7 +61,7 @@ function App() {
   }
 
   async function display_canister() {
-    console.log(await actorFactory.get_principal())
+    console.log(await actorBackend.get_principal())
   }
   
   async function mint() {
@@ -84,7 +84,7 @@ function App() {
   }
 
   async function createCanister() {
-    let result = await actorFactory.mint_collection_canister({    
+    let result = await actorBackend.mint_collection_canister({    
       icrc7_symbol: "c",
       icrc7_name: "aasd",
       icrc7_description: [],

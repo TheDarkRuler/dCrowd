@@ -16,17 +16,17 @@
       "package": "icrc7",
       "type": "rust"
     },
-    "factory": {
+    "marketplace_backend": {
       "type": "rust",
-      "package": "factory",
-      "candid": "src/factory/factory.did",
+      "package": "marketplace_backend",
+      "candid": "src/marketplace_backend/marketplace_backend.did",
       "optimize": "cycles",
       "wasm": "gzip"
     },
     "marketplace_frontend": {
       "dependencies": [
         "internet_identity",
-        "factory"
+        "marketplace_backend"
       ],
       "source": [
         "src/marketplace_frontend/dist"
