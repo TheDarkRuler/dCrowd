@@ -1,6 +1,7 @@
 import { HttpAgent, Identity, Agent } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/agent/lib/cjs/index";
 import { AuthClient } from "@dfinity/auth-client";
 import { createActor as createBackendActor, marketplace_backend } from "../../declarations/marketplace_backend";
+import { createActor as createIcrcActor, icrc7} from "../../declarations/icrc7";
 import { isSafari } from 'react-device-detect';
 
 function App() {
@@ -8,6 +9,7 @@ function App() {
   let identity: Identity;
   let agent: Agent;
   let actorBackend = marketplace_backend;
+  let actorIcrc7 = icrc7;
 
   const local_ii_url = isSafari ? 
     `http://127.0.0.1:4943/?canisterId=${process.env.CANISTER_ID_INTERNET_IDENTITY}`: 
@@ -44,26 +46,26 @@ function App() {
   }
 
   async function display_canister() {
-    console.log(await actorBackend.get_principal())
+    console.log(await actorBackend.get_canister_ids([]))
   }
   
   async function mint() {
-    /*let result = await actorIcrc7.icrc7_mint({to: {owner: identity!.getPrincipal(), subaccount: []}, token_id: BigInt(12), memo: [], 
+    let result = await actorIcrc7.icrc7_mint({to: {owner: identity!.getPrincipal(), subaccount: []}, token_id: BigInt(12), memo: [], 
       from_subaccount: [], token_description: [], token_logo: [], token_name: []}).then((a) => {
         //document.getElementById("loginStatus")!.innerText = icrc7.Result
         console.log(a)
         console.log(identity!.getPrincipal().toString())
       });
-    console.log(result);*/
+    console.log(result);
   }
 
   async function changeCollection() {
 
-    /*const canisterIcircId = document.querySelector<HTMLInputElement>("#canisterID")!.value
+    const canisterIcircId = document.querySelector<HTMLInputElement>("#canisterID")!.value
     console.log(canisterIcircId);
-    actorIcrc7 = createActor(canisterIcircId, {
+    actorIcrc7 = createIcrcActor(canisterIcircId, {
       agent,
-    });*/
+    });
   }
 
   async function createCanister() {

@@ -1,4 +1,4 @@
-use ic_cdk::{query, update};
+use ic_cdk_macros::{query, update};
 
 #[derive(candid::CandidType, candid::Deserialize, Debug)]
 pub struct WalletReceiveResult {
@@ -7,7 +7,7 @@ pub struct WalletReceiveResult {
 
 #[query(name = "wallet_balance")]
 pub fn wallet_balance() -> candid::Nat {
-    candid::Nat::from(ic_cdk::api::canister_balance128())
+    return candid::Nat::from(ic_cdk::api::canister_balance128());
 }
 
 #[update(name = "wallet_receive")]

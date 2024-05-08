@@ -1,7 +1,5 @@
 use candid::CandidType;
-use serde::Deserialize;
-
-use crate::ext_types::{AccountIdentifierHex, TokenIdentifier};
+use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum TransferError {
@@ -11,17 +9,6 @@ pub enum TransferError {
     TooOld,
     CreatedInFuture { ledger_time: u64 },
     Duplicate { duplicate_of: u128 },
-    GenericError { error_code: u128, message: String },
-    GenericBatchError { error_code: u128, message: String },
-}
-
-#[derive(CandidType, Clone)]
-pub enum ApprovalError {
-    Unauthorized { tokens_ids: Vec<u128> },
-    TooOld,
-    TemporaryUnavailable,
-    NonExistingTokenId,
-    InvalidSpender,
     GenericError { error_code: u128, message: String },
     GenericBatchError { error_code: u128, message: String },
 }
@@ -44,22 +31,6 @@ pub enum MintError {
     GenericBatchError { error_code: u128, message: String },
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum ExtCommonError {
-    InvalidToken(TokenIdentifier),
-    Other(String),
-}
-
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum ExtTransferError {
-    Unauthorized(AccountIdentifierHex),
-    InsufficientBalance,
-    Rejected,
-    InvalidToken(TokenIdentifier),
-    CannotNotify(AccountIdentifierHex),
-    Other(String),
-}
-
 #[derive(CandidType, Debug, PartialEq, Deserialize)]
 pub enum InsertTransactionError {
     SyncPending,
@@ -68,4 +39,63 @@ pub enum InsertTransactionError {
     Unexpected(String),
     CantWrite,
     InvalidId,
+}
+
+// ICRC37 Error
+
+#[derive(CandidType, Debug, PartialEq, Deserialize, Clone)]
+pub enum ApproveTokenError {
+    TooOld,
+    InvalidSpender,
+    CreatedInFuture { ledger_time: u64 },
+    NonExistingTokenId,
+    Unauthorized,
+    GenericError { error_code: u128, message: String },
+    Duplicate { duplicate_of: u128 },
+    GenericBatchError { error_code: u128, message: String },
+}
+
+#[derive(CandidType, Debug, PartialEq, Deserialize, Clone)]
+pub enum ApproveCollectionError {
+    InvalidSpender,
+    TooOld,
+    CreatedInFuture { ledger_time: u64 },
+    GenericError { error_code: u128, message: String },
+    Duplicate { duplicate_of: u128 },
+    GenericBatchError { error_code: u128, message: String },
+}
+
+#[derive(CandidType, Debug, PartialEq, Deserialize, Clone)]
+pub enum RevokeTokenApprovalError {
+    TooOld,
+    CreatedInFuture { ledger_time: u64 },
+    NonExistingTokenId,
+    Unauthorized,
+    ApprovalDoesNotExist,
+    GenericError { error_code: u128, message: String },
+    Duplicate { duplicate_of: u128 },
+    GenericBatchError { error_code: u128, message: String },
+}
+
+#[derive(CandidType, Debug, PartialEq, Deserialize, Clone)]
+pub enum RevokeCollectionApprovalError {
+    TooOld,
+    CreatedInFuture { ledger_time: u64 },
+    Unauthorized,
+    ApprovalDoesNotExist,
+    GenericError { error_code: u128, message: String },
+    Duplicate { duplicate_of: u128 },
+    GenericBatchError { error_code: u128, message: String },
+}
+
+#[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
+pub enum TransferFromError {
+    NonExistingTokenId,
+    InvalidRecipient,
+    Unauthorized,
+    TooOld,
+    CreatedInFuture { ledger_time: u64 },
+    Duplicate { duplicate_of: u128 },
+    GenericError { error_code: u128, message: String },
+    GenericBatchError { error_code: u128, message: String },
 }

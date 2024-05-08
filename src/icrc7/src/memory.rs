@@ -1,4 +1,5 @@
 use crate::{
+    icrc37_types::{CollectionApprovalInfo, TokenApprovalInfo, UserAccount},
     icrc7_types::Transaction,
     state::{Icrc7Token, MEMORY_MANAGER},
 };
@@ -24,6 +25,11 @@ pub fn get_log_memory() -> StableBTreeMap<u128, Transaction, Memory> {
     StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(2))))
 }
 
-pub fn get_ext_account_memory() -> StableBTreeMap<String, String, Memory> {
+pub fn get_token_approvals_memory() -> StableBTreeMap<u128, TokenApprovalInfo, Memory> {
     StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(3))))
+}
+
+pub fn get_collection_approvals_memory(
+) -> StableBTreeMap<UserAccount, CollectionApprovalInfo, Memory> {
+    StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(4))))
 }
