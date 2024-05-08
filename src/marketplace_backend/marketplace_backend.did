@@ -18,5 +18,5 @@ type Result = variant { Ok : text; Err : text };
 
 service : { 
   mint_collection_canister : (Arg) -> (Result);
-  get_principal : () -> (variant { Ok : vec text; Err : text });
+  get_canister_ids : (opt text) -> (variant { Ok : vec text; Err : text });
 }

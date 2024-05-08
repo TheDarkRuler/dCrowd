@@ -1,6 +1,5 @@
 import { HttpAgent, Identity, Agent } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/agent/lib/cjs/index";
 import { AuthClient } from "@dfinity/auth-client";
-import { createActor, icrc7 } from '../../declarations/icrc7';
 import { createActor as createBackendActor, marketplace_backend } from "../../declarations/marketplace_backend";
 import { isSafari } from 'react-device-detect';
 
@@ -9,11 +8,7 @@ function App() {
   let identity: Identity;
   let agent: Agent;
   let actorBackend = marketplace_backend;
-  let actorIcrc7 = icrc7;
 
-
-  // The <canisterId>.localhost URL is used as opposed to setting the canister id as a parameter
-  // since the latter is brittle with regards to transitively loaded resources.
   const local_ii_url = isSafari ? 
     `http://127.0.0.1:4943/?canisterId=${process.env.CANISTER_ID_INTERNET_IDENTITY}`: 
     `http://${process.env.CANISTER_ID_INTERNET_IDENTITY}.localhost:4943/`;
@@ -24,17 +19,12 @@ function App() {
     local_ii_url;
 
   async function handleLogin() {
-      // When the user clicks, we start the login process.
-      // First we have to create and AuthClient.
+
       const authClient = await AuthClient.create();
 
-      // Find out which URL should be used for login.
       const iiUrl = document.querySelector<HTMLInputElement>("#iiUrl")!.value;
       const canisterBackendId = process.env.CANISTER_ID_MARKETPLACE_BACKEND;
 
-      // Call authClient.login(...) to login with Internet Identity. This will open a new tab
-      // with the login prompt. The code has to wait for the login process to complete.
-      // We can either use the callback functions directly or wrap in a promise.
       await new Promise<void>((resolve, reject) => {
         authClient.login({
           identityProvider: iiUrl,
@@ -43,20 +33,13 @@ function App() {
         });
       });
 
-      // At this point we're authenticated, and we can get the identity from the auth client:
       identity = authClient.getIdentity()
-      // Using the identity obtained from the auth client, we can create an agent to interact with the IC.
-      // Using the interface description of our webapp, we create an actor that we use to call the service methods.
 
       agent = new HttpAgent({ identity: identity as unknown as Identity });
 
       actorBackend = createBackendActor(canisterBackendId as string, {
         agent
       });
-
-      // Call whoami which returns the principal (user id) of the current user.
-      // show the principal on the page
-      
 
   }
 
@@ -65,22 +48,22 @@ function App() {
   }
   
   async function mint() {
-    let result = await actorIcrc7.icrc7_mint({to: {owner: identity!.getPrincipal(), subaccount: []}, token_id: BigInt(12), memo: [], 
+    /*let result = await actorIcrc7.icrc7_mint({to: {owner: identity!.getPrincipal(), subaccount: []}, token_id: BigInt(12), memo: [], 
       from_subaccount: [], token_description: [], token_logo: [], token_name: []}).then((a) => {
         //document.getElementById("loginStatus")!.innerText = icrc7.Result
         console.log(a)
         console.log(identity!.getPrincipal().toString())
       });
-    console.log(result);
+    console.log(result);*/
   }
 
   async function changeCollection() {
 
-    const canisterIcircId = document.querySelector<HTMLInputElement>("#canisterID")!.value
+    /*const canisterIcircId = document.querySelector<HTMLInputElement>("#canisterID")!.value
     console.log(canisterIcircId);
     actorIcrc7 = createActor(canisterIcircId, {
       agent,
-    });
+    });*/
   }
 
   async function createCanister() {

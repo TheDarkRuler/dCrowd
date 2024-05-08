@@ -1,9 +1,8 @@
 use crate::common::guards::caller_is_auth;
 use crate::common::structures::InitArg;
 use crate::common::structures::Arg;
-use crate::memory::get_records;
 use crate::memory::insert_record;
-use candid::{Encode, Principal};
+use candid::Encode;
 use ic_cdk::api::management_canister::{
     main::{create_canister, install_code, CreateCanisterArgument, InstallCodeArgument},
     provisional::CanisterSettings,
@@ -74,14 +73,4 @@ async fn mint_collection_canister(arg: Arg) -> Result<String, String> {
         },
         Err((code, msg)) => Err(format!("Code: {:?}, Message: {:?}", code, msg)),
     }
-}
-
-#[ic_cdk::query(guard = "caller_is_auth")]
-fn get_principal() -> Result<Vec<String>, String> {
-    let caller: Principal = ic_cdk::caller();
-    let res = get_records().iter().filter(|x| *x.1 == caller).map(|x| x.0.to_string()).collect::<Vec<String>>();
-    if res.is_empty() {
-        return Err("this caller does not own any collection".to_string());
-    }
-    Ok(res)
 }
