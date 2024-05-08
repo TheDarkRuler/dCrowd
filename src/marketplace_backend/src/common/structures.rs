@@ -21,7 +21,7 @@ pub struct InitArg {
 }
 
 #[derive(CandidType, Deserialize)]
-pub struct Arg {
+pub struct CanisterArg {
     pub icrc7_symbol: String,
     pub icrc7_name: String,
     pub icrc7_description: Option<String>,
@@ -37,8 +37,8 @@ pub struct Arg {
     pub permitted_drift: Option<u64>,
 }
 
-impl From<(Account, Arg)> for InitArg {
-    fn from((account, arg): (Account, Arg)) -> Self {
+impl From<(Account, CanisterArg)> for InitArg {
+    fn from((account, arg): (Account, CanisterArg)) -> Self {
         Self {
             minting_account: Some(account),
             icrc7_symbol: arg.icrc7_symbol,
@@ -56,4 +56,19 @@ impl From<(Account, Arg)> for InitArg {
             permitted_drift: arg.permitted_drift,
         }
     }
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct NftMetadata {
+    pub name: String,
+    pub privilege_code: u8,
+    pub description: String,
+    pub quantity: u128,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct Arg {
+    pub canister_arg: CanisterArg,
+    pub nfts: NftMetadata,
+
 }

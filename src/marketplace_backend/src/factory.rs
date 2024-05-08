@@ -1,6 +1,5 @@
-use crate::common::guards::caller_is_auth;
+use crate::common::structures::CanisterArg;
 use crate::common::structures::InitArg;
-use crate::common::structures::Arg;
 use crate::memory::insert_record;
 use candid::Encode;
 use ic_cdk::api::management_canister::{
@@ -33,8 +32,7 @@ pub const ICRC7_WASM: &[u8] = std::include_bytes!("../../../wasm_files/icrc7.was
 /// ## Returns
 /// * canister id of the collection
 /// 
-#[ic_cdk::update(guard = "caller_is_auth")]
-async fn mint_collection_canister(arg: Arg) -> Result<String, String> {
+pub async fn mint_collection_canister(arg: CanisterArg) -> Result<String, String> {
     let caller = ic_cdk::caller();
     let account = Account {
         owner: caller.clone(),

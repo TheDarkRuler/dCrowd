@@ -1,7 +1,8 @@
-import { HttpAgent, Identity, Agent } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/agent/lib/cjs/index";
+import { HttpAgent, Identity, Agent, ActorSubclass } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/agent/lib/cjs/index";
 import { AuthClient } from "@dfinity/auth-client";
 import { createActor as createBackendActor, marketplace_backend } from "../../declarations/marketplace_backend";
-import { createActor as createIcrcActor, icrc7} from "../../declarations/icrc7";
+import { createActor as createIcrcActor} from "../../declarations/icrc7";
+import { _SERVICE } from "../../declarations/icrc7/icrc7.did";
 import { isSafari } from 'react-device-detect';
 
 function App() {
@@ -9,7 +10,7 @@ function App() {
   let identity: Identity;
   let agent: Agent;
   let actorBackend = marketplace_backend;
-  let actorIcrc7 = icrc7;
+  let actorsIcrc7 = new Map<string, ActorSubclass<_SERVICE>>();
 
   const local_ii_url = isSafari ? 
     `http://127.0.0.1:4943/?canisterId=${process.env.CANISTER_ID_INTERNET_IDENTITY}`: 
@@ -43,6 +44,16 @@ function App() {
         agent
       });
 
+      let canisters = await actorBackend.get_canister_ids([]);
+
+      if ("Ok" in canisters) {
+        for (const x in canisters.Ok) {
+
+          actorsIcrc7.set(x, createIcrcActor(x, {
+            agent,
+          }));
+        }
+      }
   }
 
   async function display_canister() {
@@ -50,22 +61,18 @@ function App() {
   }
   
   async function mint() {
-    let result = await actorIcrc7.icrc7_mint({to: {owner: identity!.getPrincipal(), subaccount: []}, token_id: BigInt(12), memo: [], 
+    let canisters = await actorBackend.get_canister_ids([]);
+    let canisterId = "";
+    if ("Ok" in canisters) {
+      canisterId = canisters.Ok[0]
+    }
+    let result = await actorsIcrc7.get(canisterId)?.icrc7_mint({to: {owner: identity!.getPrincipal(), subaccount: []}, token_id: BigInt(12), memo: [], 
       from_subaccount: [], token_description: [], token_logo: [], token_name: []}).then((a) => {
         //document.getElementById("loginStatus")!.innerText = icrc7.Result
         console.log(a)
         console.log(identity!.getPrincipal().toString())
       });
     console.log(result);
-  }
-
-  async function changeCollection() {
-
-    const canisterIcircId = document.querySelector<HTMLInputElement>("#canisterID")!.value
-    console.log(canisterIcircId);
-    actorIcrc7 = createIcrcActor(canisterIcircId, {
-      agent,
-    });
   }
 
   async function createCanister() {
@@ -91,6 +98,11 @@ function App() {
 
   }
 
+  async function symbol() {
+    const canisterIcircId = document.querySelector<HTMLInputElement>("#canisterIDforSymbol")!.value
+    console.log(await actorBackend.collection_symbol(canisterIcircId))
+  }
+
   return (
     <main>
       <h1>Internet Identity Demo Webapp</h1>
@@ -113,14 +125,15 @@ function App() {
         <button >balance of</button><br/><br/>
         <button >logo</button><br/><br/>
         <button >name</button><br/><br/>
-        <button >description</button><br/><br/>
+        <input id="canisterIDforSymbol" type="text"/><br/>
+        <button onClick={symbol}>symbol</button><br/><br/>
         <button onClick={mint}>mint</button><br/><br/>
         <button >name</button><br/><br/>
         <button >set minting authority</button><br/><br/>
         <button >owner of</button><br/><br/>
         <button >approve</button><br/><br/>
         <input id="canisterID" type="text"/><br/>
-        <button onClick={changeCollection}>set collection</button><br/><br/>
+        <button >set collection</button><br/><br/>
 
 
       </section>
