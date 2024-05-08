@@ -57,3 +57,19 @@ impl From<(Account, Arg)> for InitArg {
         }
     }
 }
+
+pub struct TokenMetadata {
+    pub permission_code: u64,
+
+}
+
+#[derive(CandidType, Deserialize, Clone)]
+pub struct MintArg {
+    pub quantity: u64,
+    pub memo: Option<Vec<u8>>,
+    // if None, then the combination of Collection's symbol and token's id will be provided
+    // for e.g.: "ICRC7 100"
+    pub token_name: Option<String>,
+    pub token_description: Option<String>,
+    pub token_logo: Option<String>,
+}
