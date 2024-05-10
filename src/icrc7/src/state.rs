@@ -1672,7 +1672,7 @@ impl State {
 
         if is_found {
             results.push(GetArchivesResultItem {
-                canister_id: canister_id,
+                canister_id,
                 start: self.archive_ledger_info.first_index,
                 end: self.archive_ledger_info.last_index,
             })

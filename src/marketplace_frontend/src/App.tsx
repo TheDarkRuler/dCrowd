@@ -4,6 +4,7 @@ import { createActor as createBackendActor, marketplace_backend } from "../../de
 import { createActor as createIcrcActor} from "../../declarations/icrc7";
 import { _SERVICE } from "../../declarations/icrc7/icrc7.did";
 import { isSafari } from 'react-device-detect';
+import { Principal } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/principal";
 
 function App() {
 
@@ -143,10 +144,12 @@ function App() {
       canisterId = canisters.Ok[0]
     }
 
-    let res = await actorsIcrc7.get(canisterId)?.icrc3_get_archives()
+    console.log(await actorsIcrc7.get(canisterId)?.icrc7_archive_log_canister())
+
+    let res = await actorsIcrc7.get(canisterId)?.icrc3_get_archives({'from' : [Principal.fromText(canisterId)]})
     console.log(res)
     
-    let res2 = await actorsIcrc7.get(canisterId)?.icrc3_get_blocks()
+    let res2 = await actorsIcrc7.get(canisterId)?.icrc3_get_blocks([{ 'start' : 0n, 'length' : 0n }])
     console.log(res2)
   }
 
