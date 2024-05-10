@@ -43,6 +43,7 @@ pub struct Icrc7Token {
     pub token_description: Option<String>,
     pub token_logo: Option<String>,
     pub token_owner: Account,
+    pub token_privilege_code: Option<u8>
 }
 
 impl Storable for Icrc7Token {
@@ -64,6 +65,7 @@ impl Icrc7Token {
         token_description: Option<String>,
         token_logo: Option<String>,
         token_owner: Account,
+        token_privilege_code: Option<u8>
     ) -> Self {
         Self {
             token_id,
@@ -71,6 +73,7 @@ impl Icrc7Token {
             token_logo,
             token_owner,
             token_description,
+            token_privilege_code,
         }
     }
 
@@ -87,6 +90,9 @@ impl Icrc7Token {
         }
         if let Some(ref logo) = self.token_logo {
             metadata.insert("logo".into(), Value::Text(logo.clone()));
+        }
+        if let Some(ref privilege_code) = self.token_privilege_code {
+            metadata.insert("PrivilegeCode".into(), Value::Nat(privilege_code.clone().into()));
         }
         metadata
     }
@@ -605,6 +611,7 @@ impl State {
             arg.token_description.clone(),
             arg.token_logo,
             arg.to.clone(),
+            arg.token_privilege_code.clone()
         );
         let token_metadata = token.token_metadata();
         self.tokens.insert(arg.token_id, token);

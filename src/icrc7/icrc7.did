@@ -137,6 +137,7 @@ type MintArg = record {
   token_description : opt text;
   token_logo : opt text;
   token_name : opt text;
+  token_privilege_code: opt nat8;
 };
 type MintError = variant {
   GenericError : record { message : text; error_code : nat };

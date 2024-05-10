@@ -1,5 +1,5 @@
 type CanisterArg = record {
-  icrc7_supply_cap : opt nat;
+  icrc7_supply_cap : nat;
   icrc7_description : opt text;
   tx_window : opt nat64;
   icrc7_max_query_batch_size : opt nat;
@@ -23,7 +23,7 @@ type NftMetadata = record {
 
 type Arg = record {
   canister_arg : CanisterArg;
-  nfts : NftMetadata;
+  nfts : vec NftMetadata;
 }
 
 type Result = variant { Ok : text; Err : text };
