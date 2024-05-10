@@ -308,9 +308,9 @@ pub struct GetTransactionsResult {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct GetBlocksResult {
-    pub blocks: Vec<ArchivedTransactionResponse>,
+    pub blocks: Vec<QueryBlock>,
     pub log_length: u128,
-    pub archived_blocks: Vec<u8>,
+    pub archived_blocks: Vec<ArchivedTransactionResponse>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -388,11 +388,19 @@ pub struct ArchivedTransactionResponse {
     pub callback: QueryTransactionsFn,
 }
 
-pub type QueryTransactionsFn = GetTransactionsFn<Vec<TransactionRange>, GetTransactionsResult>;
+pub type QueryTransactionsFn = GetTransactionsFn<Vec<QueryBlock>, GetTransactionsResult>;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct GetArchivesResultItem {
     pub canister_id: Principal,
     pub start: u128,
     pub end: u128,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ArchiveCreateArgs {
+    pub max_pages: u128,
+    pub max_records: u128,
+    pub first_index: u128,
+    pub controllers: Option<Option<Vec<Principal>>>,
 }

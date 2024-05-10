@@ -23,6 +23,11 @@
       "optimize": "cycles",
       "wasm": "gzip"
     },
+    "archive": {
+      "candid": "src/archive/archive.did",
+      "type": "custom",
+      "wasm": "src/archive/archive.wasm"
+    },
     "marketplace_frontend": {
       "dependencies": [
         "internet_identity",
