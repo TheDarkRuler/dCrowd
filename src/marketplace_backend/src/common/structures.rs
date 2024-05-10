@@ -60,11 +60,11 @@ impl From<(Account, CanisterArg)> for InitArg {
 
 #[derive(CandidType, Deserialize)]
 pub struct NftMetadata {
-    pub name: String,
-    pub privilege_code: u8,
-    pub description: String,
+    pub token_name: String,
+    pub token_privilege_code: u8,
+    pub token_description: String,
     pub quantity: u128,
-    pub logo: String,
+    pub token_logo: String,
 }
 
 #[derive(CandidType, Deserialize)]
@@ -78,6 +78,7 @@ pub struct Arg {
 pub struct MintArg {
     pub to : Account,
     pub token_id : u128,
+    pub memo: Option<Vec<u8>>,
     pub from_subaccount : Option<Vec<u8>>,
     pub token_description : Option<String>,
     pub token_logo : Option<String>,
@@ -85,7 +86,7 @@ pub struct MintArg {
     pub token_privilege_code: Option<u8>
   }
 
-  #[derive(CandidType, Deserialize)]
+  #[derive(CandidType, Deserialize, Debug)]
 pub enum MintError {
     GenericError { message : String, error_code : u128 },
     SupplyCapReached,

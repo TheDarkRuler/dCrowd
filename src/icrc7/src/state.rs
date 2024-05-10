@@ -561,7 +561,7 @@ impl State {
 
     fn mock_mint(&self, caller: &Account, arg: &MintArg) -> Result<(), MintError> {
         if let Some(cap) = self.icrc7_supply_cap {
-            if cap == self.icrc7_total_supply {
+            if cap <= self.icrc7_total_supply {
                 return Err(MintError::SupplyCapReached);
             }
         }
@@ -627,6 +627,7 @@ impl State {
             ic_cdk::api::time(),
             arg.memo,
         );
+        self.icrc7_total_supply += 1;
         Ok(txn_id)
     }
 

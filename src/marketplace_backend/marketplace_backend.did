@@ -15,21 +15,21 @@ type CanisterArg = record {
 };
 
 type NftMetadata = record {
-  name: text;
-  privilege_code: nat8;
-  description: text;
+  token_name: text;
+  token_privilege_code: nat8;
+  token_description: text;
+  token_logo: text;
   quantity: nat;
-}
+};
 
 type Arg = record {
   canister_arg : CanisterArg;
   nfts : vec NftMetadata;
-}
+};
 
 type Result = variant { Ok : text; Err : text };
 
 service : { 
-  collection_symbol : (text) -> (text);
-  mint_collection_canister : (Arg) -> (Result);
+  create_collection_nfts : (Arg) -> (Result);
   get_canister_ids : (opt text) -> (variant { Ok : vec text; Err : text });
 }

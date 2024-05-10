@@ -11,8 +11,12 @@ use crate::{
 use icrc_ledger_types::icrc1::account::Account;
 
 #[update]
-pub fn icrc7_mint(arg: MintArg) -> MintResult {
-    let caller = ic_cdk::caller();
+pub fn icrc7_mint(arg: MintArg, caller: Option<Principal>) -> MintResult {
+    let caller = match caller {
+        Some(x) => x,
+        None => ic_cdk::caller(),
+    };
+
     if caller == Principal::anonymous() {
         return Err(crate::errors::MintError::GenericBatchError {
             error_code: 100,

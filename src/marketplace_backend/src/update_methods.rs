@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use candid::Principal;
 use icrc_ledger_types::icrc1::account::Account;
 
@@ -38,38 +40,42 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, MintError> {
     }
 
     let canister_id = match mint_collection_canister(arg.canister_arg).await {
-        Ok(x) => x,
+        Ok(x) => Principal::from_str(&x).expect("unable to tranform string to Principal"),
         Err(message) => return Err(MintError::GenericError { 
             message, 
             error_code: 400
         }),
     };
-    
-    let mut tkn_id = 0;
+
+    let mut tkn_id = 1;
+
     for x in arg.nfts.iter() {
-        let mint_arg = MintArg {
+        let mut mint_arg = MintArg {
             to: Account {
                 owner: ic_cdk::caller(),
                 subaccount: None,
             },
+            memo: None,
             token_id: tkn_id,
             from_subaccount: None,
-            token_description: Some(x.description.clone()),
-            token_logo: Some(x.logo.clone()),
-            token_name: Some(x.name.clone()),
-            token_privilege_code: Some(x.privilege_code.clone()),
+            token_description: Some((*x).token_description.clone()),
+            token_logo: Some((*x).token_logo.clone()),
+            token_name: Some((*x).token_name.clone()),
+            token_privilege_code: Some((*x).token_privilege_code.clone()),
         };
 
-        let (mint_result,): (Result<u128, MintError>,) = ic_cdk::call(Principal::from_text(canister_id.clone())
-            .expect("unable to convert string to canister id"), "icrc7_mint", (mint_arg,))
+        for _ in 0..x.quantity {
+            
+            let (mint_result,): (Result<u128, MintError>,) = ic_cdk::call(canister_id.clone(), "icrc7_mint", (&mint_arg, ic_cdk::caller(),))
             .await
             .expect("Error in minting NFT");
 
-        if mint_result.is_err() {
-            return Err(mint_result.err().unwrap());
+            if mint_result.is_err() {
+                return Err(mint_result.err().expect("error message not loaded"));
+            }
+            tkn_id += 1;
+            mint_arg.token_id = tkn_id;
         }
-
-        tkn_id += 1;
     }
-    Ok(canister_id)
+    Ok(canister_id.to_string())
 }

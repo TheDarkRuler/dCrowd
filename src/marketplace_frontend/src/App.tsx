@@ -1,5 +1,5 @@
-import { HttpAgent, Identity, Agent, ActorSubclass } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/agent/lib/cjs/index";
-import { AuthClient } from "@dfinity/auth-client";
+import { HttpAgent, Identity, Agent, ActorSubclass } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/agent";
+import { AuthClient } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/auth-client";
 import { createActor as createBackendActor, marketplace_backend } from "../../declarations/marketplace_backend";
 import { createActor as createIcrcActor} from "../../declarations/icrc7";
 import { _SERVICE } from "../../declarations/icrc7/icrc7.did";
@@ -47,12 +47,11 @@ function App() {
       let canisters = await actorBackend.get_canister_ids([]);
 
       if ("Ok" in canisters) {
-        for (const x in canisters.Ok) {
-
+        canisters.Ok.forEach(x => {
           actorsIcrc7.set(x, createIcrcActor(x, {
             agent,
           }));
-        }
+        })
       }
   }
 
@@ -64,34 +63,55 @@ function App() {
     let canisters = await actorBackend.get_canister_ids([]);
     let canisterId = "";
     if ("Ok" in canisters) {
-      canisterId = canisters.Ok[0]
+      canisterId = canisters.Ok[1]
     }
-    let result = await actorsIcrc7.get(canisterId)?.icrc7_mint({to: {owner: identity!.getPrincipal(), subaccount: []}, token_id: BigInt(12), memo: [], 
-      from_subaccount: [], token_description: [], token_logo: [], token_name: []}).then((a) => {
-        //document.getElementById("loginStatus")!.innerText = icrc7.Result
-        console.log(a)
-        console.log(identity!.getPrincipal().toString())
-      });
-    console.log(result);
+    await actorsIcrc7.get(canisterId)?.icrc7_mint({
+      to: { owner: identity!.getPrincipal(), subaccount: [] }, token_id: BigInt(400), memo: [],
+      from_subaccount: [], token_description: [], token_logo: [], token_name: [],
+      token_privilege_code: []
+    }, [])
   }
 
   async function createCanister() {
-    let result = await actorBackend.mint_collection_canister({    
-      icrc7_symbol: "c",
-      icrc7_name: "aasd",
-      icrc7_description: [],
-      icrc7_logo: [],
-      icrc7_supply_cap: [],
-      icrc7_max_query_batch_size: [],
-      icrc7_max_update_batch_size: [],
-      icrc7_max_take_value: [],
-      icrc7_default_take_value: [],
-      icrc7_max_memo_size: [],
-      icrc7_atomic_batch_transfers: [],
-      tx_window: [],
-      permitted_drift: []
+    let result = await actorBackend.create_collection_nfts({
+      canister_arg: {
+        icrc7_symbol: "c",
+        icrc7_name: "aasd",
+        icrc7_description: [],
+        icrc7_logo: [],
+        icrc7_supply_cap: BigInt(50),
+        icrc7_max_query_batch_size: [],
+        icrc7_max_update_batch_size: [],
+        icrc7_max_take_value: [],
+        icrc7_default_take_value: [],
+        icrc7_max_memo_size: [],
+        icrc7_atomic_batch_transfers: [],
+        tx_window: [],
+        permitted_drift: []
+      },
+      nfts: [{
+        token_description: "standard ticket",
+        quantity: 30n,
+        token_logo: "logo standard",
+        token_name: "standard",
+        token_privilege_code: 1
+      },
+      {
+        token_description: "premium ticket",
+        quantity: 20n,
+        token_logo: "logo",
+        token_name: "premium",
+        token_privilege_code: 2
+      }]
     });
     console.log(result)
+
+    if ("Ok" in result) {
+      actorsIcrc7.set(result.Ok, createIcrcActor(result.Ok, {
+        agent,
+      }));
+    }
+
   }
   
   function lesgo() {
@@ -100,7 +120,7 @@ function App() {
 
   async function symbol() {
     const canisterIcircId = document.querySelector<HTMLInputElement>("#canisterIDforSymbol")!.value
-    console.log(await actorBackend.collection_symbol(canisterIcircId))
+    //console.log(await actorBackend.collection_symbol(canisterIcircId))
   }
 
   return (
