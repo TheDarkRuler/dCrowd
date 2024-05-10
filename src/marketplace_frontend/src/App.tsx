@@ -63,13 +63,14 @@ function App() {
     let canisters = await actorBackend.get_canister_ids([]);
     let canisterId = "";
     if ("Ok" in canisters) {
-      canisterId = canisters.Ok[1]
+      canisterId = canisters.Ok[0]
     }
-    await actorsIcrc7.get(canisterId)?.icrc7_mint({
+    let res = await actorsIcrc7.get(canisterId)?.icrc7_mint({
       to: { owner: identity!.getPrincipal(), subaccount: [] }, token_id: BigInt(400), memo: [],
       from_subaccount: [], token_description: [], token_logo: [], token_name: [],
       token_privilege_code: []
     }, [])
+    console.log(res)
   }
 
   async function createCanister() {
@@ -114,13 +115,39 @@ function App() {
 
   }
   
-  function lesgo() {
+  async function display_nfts() {
+    let canisters = await actorBackend.get_canister_ids([]);
+    let canisterId = "";
+    if ("Ok" in canisters) {
+      canisterId = canisters.Ok[0]
+    }
 
+    let tokens = await actorsIcrc7.get(canisterId)?.icrc7_tokens([], [])
+
+    if (tokens != undefined) {
+      console.log(tokens.length)
+      let res = await actorsIcrc7.get(canisterId)?.icrc7_token_metadata(tokens)
+      console.log(res)
+    }
   }
 
   async function symbol() {
     const canisterIcircId = document.querySelector<HTMLInputElement>("#canisterIDforSymbol")!.value
     //console.log(await actorBackend.collection_symbol(canisterIcircId))
+  }
+
+  async function display_archive() {
+    let canisters = await actorBackend.get_canister_ids([]);
+    let canisterId = "";
+    if ("Ok" in canisters) {
+      canisterId = canisters.Ok[0]
+    }
+
+    let res = await actorsIcrc7.get(canisterId)?.icrc3_get_archives()
+    console.log(res)
+    
+    let res2 = await actorsIcrc7.get(canisterId)?.icrc3_get_blocks()
+    console.log(res2)
   }
 
   return (
@@ -134,7 +161,7 @@ function App() {
         <button onClick={handleLogin}>Login with Internet Identity</button><br/><br/>
         <button onClick={createCanister}>create canister</button><br/><br/>
         <button onClick={display_canister}>display all your canisters</button><br/><br/>
-        <button >get all nfts</button><br/><br/>
+        <button onClick={display_nfts}>get all nfts</button><br/><br/>
         <button >show token metadata</button><br/><br/>
         <button >minting authority</button><br/><br/>
         <button >supply cap</button><br/><br/>
@@ -143,7 +170,7 @@ function App() {
         <button >supported standard</button><br/><br/>
         <button >burn</button><br/><br/>
         <button >balance of</button><br/><br/>
-        <button >logo</button><br/><br/>
+        <button onClick={display_archive}>show archive</button><br/><br/>
         <button >name</button><br/><br/>
         <input id="canisterIDforSymbol" type="text"/><br/>
         <button onClick={symbol}>symbol</button><br/><br/>
