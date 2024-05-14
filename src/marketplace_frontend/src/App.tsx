@@ -81,7 +81,7 @@ function App() {
         icrc7_name: "aasd",
         icrc7_description: [],
         icrc7_logo: [],
-        icrc7_supply_cap: BigInt(50),
+        icrc7_supply_cap: 50n,
         icrc7_max_query_batch_size: [],
         icrc7_max_update_batch_size: [],
         icrc7_max_take_value: [],

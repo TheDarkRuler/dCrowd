@@ -3,9 +3,10 @@ use std::str::FromStr;
 use candid::Principal;
 use icrc_ledger_types::icrc1::account::Account;
 
-use crate::common::structures::{MintArg, MintError};
+use crate::common::structures::{CanisterInfo, MintArg, MintError};
 use crate::common::{guards::caller_is_auth, structures::Arg};
 use crate::factory::mint_collection_canister;
+use crate::memory::insert_record;
 
 ///
 /// Creates a collection of nft using the ICRC-7 standard and saves in database the principal of the owner of the colletion and the id of the canister collection.
@@ -46,6 +47,8 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, MintError> {
             error_code: 400
         }),
     };
+
+    insert_record(canister_id, CanisterInfo { owner: ic_cdk::caller(), expire_date: arg.expire_date, discount_windows: arg.discount_windows });
 
     let mut tkn_id = 1;
 

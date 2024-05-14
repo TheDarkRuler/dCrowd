@@ -1,4 +1,7 @@
-use candid::CandidType;
+use std::{borrow::Cow, collections::HashMap};
+
+use candid::{CandidType, Principal};
+use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use icrc_ledger_types::icrc1::account::Account;
 
@@ -71,7 +74,8 @@ pub struct NftMetadata {
 pub struct Arg {
     pub canister_arg: CanisterArg,
     pub nfts: Vec<NftMetadata>,
-
+    pub expire_date: u64,
+    pub discount_windows: Option<HashMap<u64, u8>>
 }
 
 #[derive(CandidType, Deserialize)]
@@ -94,4 +98,29 @@ pub enum MintError {
     Unauthorized,
     GenericBatchError { message : String, error_code : u128 },
     TokenIdAlreadyExist,
+}
+
+#[derive(Debug, Serialize, Deserialize, CandidType, Clone)]
+pub struct CanisterInfo {
+    pub owner: Principal,
+    pub expire_date: u64,
+    pub discount_windows: Option<HashMap<u64, u8>>
+}
+
+impl Storable for CanisterInfo {
+    fn to_bytes(&self) -> Cow<[u8]> { 
+
+        Cow::Owned(serde_json::to_string(self).expect("failed to serialize to bytes").as_bytes().to_vec())
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+
+        serde_json::from_str(String::from_utf8(bytes.to_vec()).expect("failed to serialize from bytes").as_str())
+            .expect("failed to serialize from bytes")
+    }
+
+    const BOUND: Bound = Bound::Bounded {
+        max_size: 1024,
+        is_fixed_size: false,
+    };
 }

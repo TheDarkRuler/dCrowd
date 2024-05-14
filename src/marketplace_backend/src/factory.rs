@@ -1,6 +1,5 @@
 use crate::common::structures::CanisterArg;
 use crate::common::structures::InitArg;
-use crate::memory::insert_record;
 use candid::Encode;
 use ic_cdk::api::management_canister::{
     main::{create_canister, install_code, CreateCanisterArgument, InstallCodeArgument},
@@ -65,10 +64,7 @@ pub async fn mint_collection_canister(arg: CanisterArg) -> Result<String, String
     })
     .await
     {
-        Ok(()) => {
-            insert_record(caller, principal);
-            Ok(principal.to_string())
-        },
+        Ok(()) => Ok(principal.to_string()),
         Err((code, msg)) => Err(format!("Code: {:?}, Message: {:?}", code, msg)),
     }
 }

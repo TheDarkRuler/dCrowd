@@ -25,6 +25,8 @@ type NftMetadata = record {
 type Arg = record {
   canister_arg : CanisterArg;
   nfts : vec NftMetadata;
+  deadline : nat64;
+  discount_windows: opt vec record { date: nat64; discount_percentage: nat8 };
 };
 
 type Result = variant { Ok : text; Err : text };

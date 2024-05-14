@@ -20,7 +20,7 @@ pub fn get_canister_ids(caller: Option<String>) -> Result<Vec<String>, String> {
         None => ic_cdk::caller(),
     };
     
-    let res = get_records().iter().filter(|x| *x.1 == caller).map(|x| x.0.to_string()).collect::<Vec<String>>();
+    let res = get_records().iter().filter(|x| (*x.1).owner == caller).map(|x| x.0.to_string()).collect::<Vec<String>>();
     if res.is_empty() {
         return Err("this caller does not own any collection".to_string());
     }
