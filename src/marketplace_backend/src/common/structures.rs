@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::borrow::Cow;
 
 use candid::{CandidType, Principal};
 use ic_stable_structures::{storable::Bound, Storable};
@@ -70,12 +70,18 @@ pub struct NftMetadata {
     pub token_logo: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, CandidType, Clone)]
+pub struct DiscountWindowArg {
+    pub expire_date: u64,
+    pub discount_percentage: u8 
+}
+
 #[derive(CandidType, Deserialize)]
 pub struct Arg {
     pub canister_arg: CanisterArg,
     pub nfts: Vec<NftMetadata>,
     pub expire_date: u64,
-    pub discount_windows: Option<HashMap<u64, u8>>
+    pub discount_windows: Vec<DiscountWindowArg>
 }
 
 #[derive(CandidType, Deserialize)]
@@ -91,7 +97,7 @@ pub struct MintArg {
   }
 
   #[derive(CandidType, Deserialize, Debug)]
-pub enum MintError {
+pub enum Errors {
     GenericError { message : String, error_code : u128 },
     SupplyCapReached,
     TokenIdMinimumLimit,
@@ -104,7 +110,7 @@ pub enum MintError {
 pub struct CanisterInfo {
     pub owner: Principal,
     pub expire_date: u64,
-    pub discount_windows: Option<HashMap<u64, u8>>
+    pub discount_windows: Vec<DiscountWindowArg>
 }
 
 impl Storable for CanisterInfo {

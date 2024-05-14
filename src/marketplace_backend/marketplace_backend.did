@@ -22,16 +22,28 @@ type NftMetadata = record {
   quantity: nat;
 };
 
+type Errors = variant {
+  GenericError : record { message : text; error_code : nat };
+  SupplyCapReached;
+  TokenIdMinimumLimit;
+  Unauthorized;
+  GenericBatchError : record { message : text; error_code : nat };
+  TokenIdAlreadyExist;
+};
+
+type DiscountWindowArg = record { 
+  expire_date: nat64; 
+  discount_percentage: nat8; 
+};
+
 type Arg = record {
   canister_arg : CanisterArg;
   nfts : vec NftMetadata;
-  deadline : nat64;
-  discount_windows: opt vec record { date: nat64; discount_percentage: nat8 };
+  expire_date : nat64;
+  discount_windows: vec DiscountWindowArg;
 };
 
-type Result = variant { Ok : text; Err : text };
-
 service : { 
-  create_collection_nfts : (Arg) -> (Result);
+  create_collection_nfts : (Arg) -> (variant { Ok : text; Err : Errors });
   get_canister_ids : (opt text) -> (variant { Ok : vec text; Err : text });
 }

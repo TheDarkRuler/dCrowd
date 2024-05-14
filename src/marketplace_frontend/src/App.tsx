@@ -104,7 +104,12 @@ function App() {
         token_logo: "logo",
         token_name: "premium",
         token_privilege_code: 2
-      }]
+      }],
+      expire_date : BigInt(Date.now() * 1_000_000 + 1_000_000_000_000),
+      discount_windows: [{
+          expire_date: BigInt(Date.now() * 1_000_000 - 1_000_000_000 ),
+          discount_percentage: 10
+        }]
     });
     console.log(result)
 
@@ -153,6 +158,11 @@ function App() {
     console.log(res2)
   }
 
+  function timestamp() {
+    console.log(Date.now() * 1_000_000)
+    console.log(window.performance.now())
+  }
+
   return (
     <main>
       <h1>Internet Identity Demo Webapp</h1>
@@ -165,6 +175,7 @@ function App() {
         <button onClick={createCanister}>create canister</button><br/><br/>
         <button onClick={display_canister}>display all your canisters</button><br/><br/>
         <button onClick={display_nfts}>get all nfts</button><br/><br/>
+        <button onClick={timestamp}>get time</button><br/><br/>
         <button >show token metadata</button><br/><br/>
         <button >minting authority</button><br/><br/>
         <button >supply cap</button><br/><br/>

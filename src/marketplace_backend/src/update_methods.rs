@@ -3,7 +3,7 @@ use std::str::FromStr;
 use candid::Principal;
 use icrc_ledger_types::icrc1::account::Account;
 
-use crate::common::structures::{CanisterInfo, MintArg, MintError};
+use crate::common::structures::{CanisterInfo, MintArg, Errors};
 use crate::common::{guards::caller_is_auth, structures::Arg};
 use crate::factory::mint_collection_canister;
 use crate::memory::insert_record;
@@ -31,10 +31,26 @@ use crate::memory::insert_record;
 /// * canister id of the collection
 /// 
 #[ic_cdk::update(guard = "caller_is_auth")]
-pub async fn create_collection_nfts(arg: Arg) -> Result<String, MintError> {
-    
+pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
+
+    if arg.expire_date <= ic_cdk::api::time() {
+        return Err(Errors::GenericError { 
+            message: "Error: Expiration date cannot be in the past".to_string(), 
+            error_code: 400
+        });
+    }
+
+    for x in arg.discount_windows.iter() {
+        if (*x).expire_date >= arg.expire_date || (*x).expire_date <= ic_cdk::api::time() {
+            return Err(Errors::GenericError { 
+                message: "Error: discount windows date cannot be in the past or it cannot be after the expire date".to_string(), 
+                error_code: 400
+            });
+        }
+    }
+
     if arg.nfts.iter().map(|x| x.quantity).sum::<u128>() != arg.canister_arg.icrc7_supply_cap {
-        return Err(MintError::GenericError { 
+        return Err(Errors::GenericError { 
             message: "number of NFTs to create does not match the supply cap".to_string(), 
             error_code: 400
         });
@@ -42,14 +58,11 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, MintError> {
 
     let canister_id = match mint_collection_canister(arg.canister_arg).await {
         Ok(x) => Principal::from_str(&x).expect("unable to tranform string to Principal"),
-        Err(message) => return Err(MintError::GenericError { 
+        Err(message) => return Err(Errors::GenericError { 
             message, 
             error_code: 400
         }),
     };
-
-    insert_record(canister_id, CanisterInfo { owner: ic_cdk::caller(), expire_date: arg.expire_date, discount_windows: arg.discount_windows });
-
     let mut tkn_id = 1;
 
     for x in arg.nfts.iter() {
@@ -69,7 +82,7 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, MintError> {
 
         for _ in 0..x.quantity {
             
-            let (mint_result,): (Result<u128, MintError>,) = ic_cdk::call(canister_id.clone(), "icrc7_mint", (&mint_arg, ic_cdk::caller(),))
+            let (mint_result,): (Result<u128, Errors>,) = ic_cdk::call(canister_id.clone(), "icrc7_mint", (&mint_arg, ic_cdk::caller(),))
             .await
             .expect("Error in minting NFT");
 
@@ -80,5 +93,7 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, MintError> {
             mint_arg.token_id = tkn_id;
         }
     }
+    insert_record(canister_id, CanisterInfo { owner: ic_cdk::caller(), expire_date: arg.expire_date, discount_windows: arg.discount_windows });
+
     Ok(canister_id.to_string())
 }
