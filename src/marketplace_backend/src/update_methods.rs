@@ -13,22 +13,39 @@ use crate::memory::insert_record;
 /// Then creates NFTs to the values passed as arguments of different types (Ex: premium, standard, VIP).
 ///
 /// ## Arguments
-/// *   icrc7_supply_cap : opt nat;
-/// *   icrc7_description : opt text;
-/// *   tx_window : opt nat64;
-/// *   icrc7_max_query_batch_size : opt nat;
-/// *   permitted_drift : opt nat64;
-/// *   icrc7_max_take_value : opt nat;
-/// *   icrc7_max_memo_size : opt nat;
-/// *   icrc7_symbol : text;
-/// *   icrc7_max_update_batch_size : opt nat;
-/// *   icrc7_atomic_batch_transfers : opt bool;
-/// *   icrc7_default_take_value : opt nat;
-/// *   icrc7_logo : opt text;
-/// *   icrc7_name : text;
-///
+///     canister_arg: record {
+///           icrc7_supply_cap : nat;
+///           icrc7_description : opt text;
+///           tx_window : opt nat64;
+///           icrc7_max_query_batch_size : opt nat;
+///           permitted_drift : opt nat64;
+///           icrc7_max_take_value : opt nat;
+///           icrc7_max_memo_size : opt nat;
+///           icrc7_symbol : text;
+///           icrc7_max_update_batch_size : opt nat;
+///           icrc7_atomic_batch_transfers : opt bool;
+///           icrc7_default_take_value : opt nat;
+///           icrc7_logo : opt text;
+///           icrc7_name : text;
+///         };
+///     nfts: vec type NftMetadata = record {
+///           token_name: text;
+///           token_privilege_code: nat8;
+///           token_description: text;
+///           token_logo: text;
+///           quantity: nat;
+///         };
+///     expire_date: nat64;
+///     
+///     discount_windows: vec type DiscountWindowArg = record { 
+///           expire_date: nat64; 
+///           discount_percentage: nat8; 
+///         };
+///     };
+/// 
 /// ## Returns
-/// * canister id of the collection
+/// * Canister id of the collection
+/// * Error
 /// 
 #[ic_cdk::update(guard = "caller_is_auth")]
 pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
@@ -64,11 +81,12 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
         }),
     };
     let mut tkn_id = 1;
+    let caller = ic_cdk::caller();
 
     for x in arg.nfts.iter() {
         let mut mint_arg = MintArg {
             to: Account {
-                owner: ic_cdk::caller(),
+                owner: caller,
                 subaccount: None,
             },
             memo: None,
@@ -82,7 +100,7 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
 
         for _ in 0..x.quantity {
             
-            let (mint_result,): (Result<u128, Errors>,) = ic_cdk::call(canister_id.clone(), "icrc7_mint", (&mint_arg, ic_cdk::caller(),))
+            let (mint_result,): (Result<u128, Errors>,) = ic_cdk::call(canister_id.clone(), "icrc7_mint", (&mint_arg, caller,))
             .await
             .expect("Error in minting NFT");
 
@@ -93,7 +111,7 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
             mint_arg.token_id = tkn_id;
         }
     }
-    insert_record(canister_id, CanisterInfo { owner: ic_cdk::caller(), expire_date: arg.expire_date, discount_windows: arg.discount_windows });
+    insert_record(canister_id, CanisterInfo { owner: caller, expire_date: arg.expire_date, discount_windows: arg.discount_windows });
 
     Ok(canister_id.to_string())
 }
