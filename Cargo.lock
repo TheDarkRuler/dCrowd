@@ -323,6 +323,19 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "ic-cdk"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f3d204af0b11c45715169c997858edb58fa8407d08f4fae78a6b415dd39a362"
+dependencies = [
+ "candid",
+ "ic-cdk-macros 0.8.4",
+ "ic0",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
+name = "ic-cdk"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8859bc2b863a77750acf199e1fb7e3fc403e1b475855ba13f59cb4e4036d238"
@@ -369,7 +382,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "054727a3a1c486528b96349817d54290ff70df6addf417def456ea708a16f7fb"
 dependencies = [
  "futures",
- "ic-cdk",
+ "ic-cdk 0.13.2",
  "ic0",
  "serde",
  "serde_bytes",
@@ -382,6 +395,21 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "197524aecec47db0b6c0c9f8821aad47272c2bd762c7a0ffe9715eaca0364061"
 dependencies = [
+ "serde",
+ "serde_bytes",
+ "sha2",
+]
+
+[[package]]
+name = "ic-ledger-types"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1fea91d351eca80ffa8427e77df3210e37d292c6c75afbe1ca5e6437418e022"
+dependencies = [
+ "candid",
+ "crc32fast",
+ "hex",
+ "ic-cdk 0.12.1",
  "serde",
  "serde_bytes",
  "sha2",
@@ -440,10 +468,11 @@ dependencies = [
  "ciborium",
  "crc32fast",
  "hex",
- "ic-cdk",
+ "ic-cdk 0.13.2",
  "ic-cdk-macros 0.13.2",
  "ic-cdk-timers",
  "ic-certified-map",
+ "ic-ledger-types",
  "ic-stable-structures",
  "icrc-ledger-types",
  "serde",
@@ -481,7 +510,7 @@ name = "marketplace_backend"
 version = "0.1.0"
 dependencies = [
  "candid",
- "ic-cdk",
+ "ic-cdk 0.13.2",
  "ic-cdk-macros 0.8.4",
  "ic-stable-structures",
  "icrc-ledger-types",

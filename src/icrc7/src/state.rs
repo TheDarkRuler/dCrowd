@@ -38,6 +38,10 @@ use ic_stable_structures::{
 use icrc_ledger_types::{
     icrc::generic_value::Value, icrc1::account::Account, icrc3::blocks::DataCertificate,
 };
+/*use ic_ledger_types::{
+    AccountIdentifier, BlockIndex, Memo, Subaccount, Tokens, DEFAULT_SUBACCOUNT,
+    MAINNET_LEDGER_CANISTER_ID,
+};*/
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 
@@ -62,6 +66,14 @@ impl Storable for Icrc7Token {
 
     const BOUND: Bound = Bound::Unbounded;
 }
+
+/*#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct TransferArgs {
+    amount: Tokens,
+    to_principal: Principal,
+    to_subaccount: Option<Subaccount>,
+}*/
+
 
 impl Icrc7Token {
     fn new(
@@ -209,7 +221,7 @@ impl State {
         self.icrc7_logo.clone()
     }
 
-    pub fn icrc7_minting_authority(&self) -> Option<Account> {
+    pub fn icrc1_minting_authority(&self) -> Option<Account> {
         self.minting_authority.clone()
     }
 
@@ -431,6 +443,31 @@ impl State {
         self.token_approvals.remove(token_id);
     }
 
+    /*async fn icp_transfer(args: TransferArgs) -> Result<BlockIndex, String> {
+        ic_cdk::println!(
+            "Transferring {} tokens to principal {} subaccount {:?}",
+            &args.amount,
+            &args.to_principal,
+            &args.to_subaccount
+        );
+        let to_subaccount = args.to_subaccount.unwrap_or(DEFAULT_SUBACCOUNT);
+        let transfer_args = ic_ledger_types::TransferArgs {
+            memo: Memo(0),
+            amount: args.amount,
+            fee: Tokens::from_e8s(10_000),
+            // The subaccount of the account identifier that will be used to withdraw tokens and send them
+            // to another account identifier. If set to None then the default subaccount will be used.
+            // See the [Ledger doc](https://internetcomputer.org/docs/current/developer-docs/integrations/ledger/#accounts).
+            from_subaccount: None,
+            to: AccountIdentifier::new(&args.to_principal, &to_subaccount),
+            created_at_time: None,
+        };
+        ic_ledger_types::transfer(MAINNET_LEDGER_CANISTER_ID, transfer_args)
+            .await
+            .map_err(|e| format!("failed to call ledger: {:?}", e))?
+            .map_err(|e| format!("ledger transfer error {:?}", e))
+    }*/
+
     fn mock_transfer(
         &self,
         current_time: &u64,
@@ -547,6 +584,7 @@ impl State {
                     _ => continue,
                 }
             }
+
             let mut token = self.tokens.get(&arg.token_id).unwrap();
             token.transfer(arg.to.clone());
             self.tokens.insert(arg.token_id, token);
