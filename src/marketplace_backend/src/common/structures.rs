@@ -106,6 +106,16 @@ pub enum Errors {
     TokenIdAlreadyExist,
 }
 
+
+#[derive(Debug, Serialize, Deserialize, CandidType, Clone)]
+pub struct CanisterFullInfo {
+    pub owner: Principal,
+    pub canister_id: Principal,
+    pub expire_date: u64,
+    pub discount_windows: Vec<DiscountWindowArg>,
+    pub available: bool
+}
+
 #[derive(Debug, Serialize, Deserialize, CandidType, Clone)]
 pub struct CanisterInfo {
     pub owner: Principal,

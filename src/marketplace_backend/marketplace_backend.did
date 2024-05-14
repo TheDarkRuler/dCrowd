@@ -36,6 +36,14 @@ type DiscountWindowArg = record {
   discount_percentage: nat8; 
 };
 
+type CanisterFullInfo = record {
+    owner: principal;
+    canister_id: principal;
+    expire_date: nat64;
+    discount_windows: vec DiscountWindowArg;
+    available: bool;
+};
+
 type Arg = record {
   canister_arg : CanisterArg;
   nfts : vec NftMetadata;
@@ -44,6 +52,9 @@ type Arg = record {
 };
 
 service : { 
-  create_collection_nfts : (Arg) -> (variant { Ok : text; Err : Errors });
-  get_canister_ids : (opt text) -> (variant { Ok : vec text; Err : text });
+  create_collection_nfts : (arg: Arg) -> (variant { Ok : text; Err : Errors });
+  get_collection_ids : (caller: opt text, offset: nat32, limit: nat32) -> (variant { Ok : vec text; Err : text });
+  get_all_collections_by_caller : (caller: opt text, offset: nat32, limit: nat32) -> (variant { Ok : vec CanisterFullInfo; Err: text});
+  get_all_collections : (offset: nat32, limit: nat32) -> (variant { Ok : vec CanisterFullInfo; Err: text});
+  get_collection_viability : (canister_id: principal) -> (variant { Ok : bool; Err: text});
 }

@@ -45,7 +45,7 @@ function App() {
         agent
       });
 
-      let canisters = await actorBackend.get_canister_ids([]);
+      let canisters = await actorBackend.get_collection_ids([], 0, 100);
 
       if ("Ok" in canisters) {
         canisters.Ok.forEach(x => {
@@ -57,11 +57,11 @@ function App() {
   }
 
   async function display_canister() {
-    console.log(await actorBackend.get_canister_ids([]))
+    console.log(await actorBackend.get_collection_ids([], 0, 100))
   }
   
   async function mint() {
-    let canisters = await actorBackend.get_canister_ids([]);
+    let canisters = await actorBackend.get_collection_ids([], 0, 100);
     let canisterId = "";
     if ("Ok" in canisters) {
       canisterId = canisters.Ok[0]
@@ -107,7 +107,7 @@ function App() {
       }],
       expire_date : BigInt(Date.now() * 1_000_000 + 1_000_000_000_000),
       discount_windows: [{
-          expire_date: BigInt(Date.now() * 1_000_000 - 1_000_000_000 ),
+          expire_date: BigInt(Date.now() * 1_000_000 + 1_000_000_000 ),
           discount_percentage: 10
         }]
     });
@@ -122,7 +122,7 @@ function App() {
   }
   
   async function display_nfts() {
-    let canisters = await actorBackend.get_canister_ids([]);
+    let canisters = await actorBackend.get_collection_ids([], 0, 100);
     let canisterId = "";
     if ("Ok" in canisters) {
       canisterId = canisters.Ok[0]
@@ -143,7 +143,7 @@ function App() {
   }
 
   async function display_archive() {
-    let canisters = await actorBackend.get_canister_ids([]);
+    let canisters = await actorBackend.get_collection_ids([], 0, 100);
     let canisterId = "";
     if ("Ok" in canisters) {
       canisterId = canisters.Ok[0]
