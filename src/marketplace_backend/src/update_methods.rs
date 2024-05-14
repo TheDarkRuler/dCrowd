@@ -44,8 +44,8 @@ use crate::memory::insert_record;
 ///     };
 /// 
 /// ## Returns
-/// * Canister id of the collection
-/// * Error
+/// * Ok: Canister id of the collection
+/// * Error: Error of type Errors
 /// 
 #[ic_cdk::update(guard = "caller_is_auth")]
 pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
