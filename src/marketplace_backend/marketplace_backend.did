@@ -19,7 +19,8 @@ type NftMetadata = record {
   token_privilege_code: nat8;
   token_description: text;
   token_logo: text;
-  quantity: nat;
+  quantity: nat64;
+  price: nat32;
 };
 
 type Errors = variant {
@@ -42,6 +43,7 @@ type CanisterFullInfo = record {
     expire_date: nat64;
     discount_windows: vec DiscountWindowArg;
     available: bool;
+    nfts: vec record {nft: NftMetadata; tkn_ids: vec nat64};
 };
 
 type Arg = record {
@@ -51,10 +53,29 @@ type Arg = record {
   discount_windows: vec DiscountWindowArg;
 };
 
+type Tokens = record {
+  e8s : nat64;
+};
+
+type SubAccount = blob;
+type Account = record { owner : principal; subaccount : opt SubAccount };
+
+type TransferArgs = record { 
+  to_account : Account; 
+  amount : nat; 
+};
+
+type OwnersDoubleKey = record {
+  collection_id: principal;
+  tkn_id: nat64;
+}
+
 service : { 
   create_collection_nfts : (arg: Arg) -> (variant { Ok : text; Err : Errors });
   get_collection_ids : (caller: opt text, offset: nat32, limit: nat32) -> (variant { Ok : vec text; Err : text });
   get_all_collections_by_caller : (caller: opt text, offset: nat32, limit: nat32) -> (variant { Ok : vec CanisterFullInfo; Err: text});
   get_all_collections : (offset: nat32, limit: nat32) -> (variant { Ok : vec CanisterFullInfo; Err: text});
   get_collection_viability : (canister_id: principal) -> (variant { Ok : bool; Err: text});
+  get_all_nfts : (offset: nat32, limit: nat32) -> (variant { Ok : vec record { OwnersDoubleKey; principal; }; Err: text});
+  transfer_nft : (args: TransferArgs) ->  (variant { Ok : nat; Err : text });
 }

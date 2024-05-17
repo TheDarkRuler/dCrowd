@@ -61,13 +61,46 @@ impl From<(Account, CanisterArg)> for InitArg {
     }
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug, Serialize, Clone)]
 pub struct NftMetadata {
     pub token_name: String,
     pub token_privilege_code: u8,
     pub token_description: String,
-    pub quantity: u128,
+    pub quantity: u64,
     pub token_logo: String,
+    pub price: u32
+}
+
+#[derive(CandidType, Deserialize, Debug, Serialize, Clone)]
+pub struct CollectionNfts {
+    pub nft: NftMetadata,
+    pub tkn_ids: Vec<u64>
+}
+
+
+#[derive(CandidType, Deserialize, Debug, Serialize, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
+pub struct OwnersDoubleKey {
+    pub collection_id: Principal,
+    pub tkn_id: u64
+}
+
+impl Storable for OwnersDoubleKey {
+
+    fn to_bytes(&self) -> Cow<[u8]> { 
+
+        Cow::Owned(serde_json::to_string(self).expect("failed to serialize to bytes").as_bytes().to_vec())
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+
+        serde_json::from_str(String::from_utf8(bytes.to_vec()).expect("failed to serialize from bytes").as_str())
+            .expect("failed to serialize from bytes")
+    }
+
+    const BOUND: Bound = Bound::Bounded {
+        max_size: 1024,
+        is_fixed_size: false,
+    };
 }
 
 #[derive(Debug, Serialize, Deserialize, CandidType, Clone)]
@@ -108,22 +141,24 @@ pub enum Errors {
 
 
 #[derive(Debug, Serialize, Deserialize, CandidType, Clone)]
-pub struct CanisterFullInfo {
+pub struct CollectionFullInfo {
     pub owner: Principal,
     pub canister_id: Principal,
     pub expire_date: u64,
     pub discount_windows: Vec<DiscountWindowArg>,
-    pub available: bool
+    pub available: bool,
+    pub nfts: Vec<CollectionNfts>
 }
 
 #[derive(Debug, Serialize, Deserialize, CandidType, Clone)]
-pub struct CanisterInfo {
+pub struct CollectionInfo {
     pub owner: Principal,
     pub expire_date: u64,
-    pub discount_windows: Vec<DiscountWindowArg>
+    pub discount_windows: Vec<DiscountWindowArg>,
+    pub nfts: Vec<CollectionNfts>
 }
 
-impl Storable for CanisterInfo {
+impl Storable for CollectionInfo {
     fn to_bytes(&self) -> Cow<[u8]> { 
 
         Cow::Owned(serde_json::to_string(self).expect("failed to serialize to bytes").as_bytes().to_vec())
@@ -136,7 +171,13 @@ impl Storable for CanisterInfo {
     }
 
     const BOUND: Bound = Bound::Bounded {
-        max_size: 1024,
+        max_size: 2048,
         is_fixed_size: false,
     };
+}
+
+#[derive(CandidType, Deserialize, Serialize, Clone)]
+pub struct TransferArgs {
+    pub amount: icrc_ledger_types::icrc1::transfer::NumTokens,
+    pub to_account: Account,
 }

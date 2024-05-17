@@ -2,9 +2,10 @@ import { HttpAgent, Identity, Agent, ActorSubclass } from "/home/formazione/Desk
 import { AuthClient } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/auth-client";
 import { createActor as createBackendActor, marketplace_backend } from "../../declarations/marketplace_backend";
 import { createActor as createIcrcActor} from "../../declarations/icrc7";
+import { createActor as createLedgerActor, icp_ledger_canister } from "../../declarations/icp_ledger_canister";
 import { _SERVICE } from "../../declarations/icrc7/icrc7.did";
 import { isSafari } from 'react-device-detect';
-import { Principal } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/principal";
+import { Principal } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/principal/lib/cjs/index";
 
 function App() {
 
@@ -12,6 +13,7 @@ function App() {
   let agent: Agent;
   let actorBackend = marketplace_backend;
   let actorsIcrc7 = new Map<string, ActorSubclass<_SERVICE>>();
+  let actorLedger = icp_ledger_canister;
 
   const local_ii_url = isSafari ? 
     `http://127.0.0.1:4943/?canisterId=${process.env.CANISTER_ID_INTERNET_IDENTITY}`: 
@@ -28,6 +30,7 @@ function App() {
 
       const iiUrl = document.querySelector<HTMLInputElement>("#iiUrl")!.value;
       const canisterBackendId = process.env.CANISTER_ID_MARKETPLACE_BACKEND;
+      const canisterLedger = process.env.CANISTER_ID_ICP_LEDGER_CANISTER;
 
       await new Promise<void>((resolve, reject) => {
         authClient.login({
@@ -42,6 +45,10 @@ function App() {
       agent = new HttpAgent({ identity: identity as unknown as Identity });
 
       actorBackend = createBackendActor(canisterBackendId as string, {
+        agent
+      });
+
+      actorLedger = createLedgerActor(canisterLedger as string, {
         agent
       });
 
@@ -96,14 +103,16 @@ function App() {
         quantity: 30n,
         token_logo: "logo standard",
         token_name: "standard",
-        token_privilege_code: 1
+        token_privilege_code: 1,
+        price: 20_000
       },
       {
         token_description: "premium ticket",
         quantity: 20n,
         token_logo: "logo",
         token_name: "premium",
-        token_privilege_code: 2
+        token_privilege_code: 2,
+        price: 5_000
       }],
       expire_date : BigInt(Date.now() * 1_000_000 + 1_000_000_000_000),
       discount_windows: [{
@@ -163,6 +172,81 @@ function App() {
     console.log(window.performance.now())
   }
 
+  async function buy() {
+    const canisterIcircId = document.querySelector<HTMLInputElement>("#canisterIDforBuy")!.value
+    console.log(await actorLedger.icrc1_name())
+    let res = await actorLedger.icrc2_approve({
+      from_subaccount: [],
+      spender: {
+        owner: Principal.fromText(process.env.CANISTER_ID_MARKETPLACE_BACKEND as string),
+        subaccount: []
+      },
+      amount: 999965935000n + await icp_ledger_canister.icrc1_fee(),
+      expected_allowance: [],
+      expires_at: [],
+      fee: [],
+      memo: [],
+      created_at_time: [],
+    })
+
+    if ('Ok' in res) {
+
+      let first = await actorLedger.icrc2_allowance({
+        account: {
+          owner: Principal.fromText("xgad6-k6unb-6xhhm-tfnjm-5mq6w-sr7p5-fwlau-ggonc-diqie-ngpjd-tqe"),
+          subaccount: []
+        },
+        spender: {
+          owner: Principal.fromText(process.env.CANISTER_ID_MARKETPLACE_BACKEND as string),
+          subaccount: []
+        }
+      })
+
+      await actorBackend.transfer_nft({
+        amount: 9999659350n,
+        to_account: {
+          owner: Principal.fromText("pofdv-klrb4-bqcke-d5tgu-tozrk-pdzpy-vzmep-depus-afiqw-s2n5e-nae"),
+          subaccount: []
+        }
+      })
+
+      let second = await actorLedger.icrc2_allowance({
+        account: {
+          owner: Principal.fromText("xgad6-k6unb-6xhhm-tfnjm-5mq6w-sr7p5-fwlau-ggonc-diqie-ngpjd-tqe"),
+          subaccount: []
+        },
+        spender: {
+          owner: Principal.fromText(process.env.CANISTER_ID_MARKETPLACE_BACKEND as string),
+          subaccount: []
+        }
+      })
+      console.log(first.allowance)
+      console.log(second.allowance)
+    } else {
+      console.log("nooooooooooooooooooo    asdas das dasd as")
+    }
+
+   
+
+  }
+
+  async function displayAllCollections() {
+    const res = await actorBackend.get_all_collections(0, 10)
+    if ("Ok" in res) {
+
+      let c = res.Ok.map(x => {
+        return {...x, canister_id: x.canister_id.toText(), owner: x.owner.toText()}
+      })
+      console.log(c)
+    }
+  }
+
+  async function displayNfts() {
+    const res = await actorBackend.get_all_nfts(0, 100);
+    console.log(res);
+  }
+
+
   return (
     <main>
       <h1>Internet Identity Demo Webapp</h1>
@@ -176,8 +260,11 @@ function App() {
         <button onClick={display_canister}>display all your canisters</button><br/><br/>
         <button onClick={display_nfts}>get all nfts</button><br/><br/>
         <button onClick={timestamp}>get time</button><br/><br/>
+        <input id="canisterIDforBuy" type="text"/><br/>
+        <button onClick={buy}>BUY</button><br/><br/>
+        <button onClick={displayAllCollections}>display all collections and NFTs</button><br/><br/>
         <button >show token metadata</button><br/><br/>
-        <button >minting authority</button><br/><br/>
+        <button onClick={displayNfts}>all nfts</button><br/><br/>
         <button >supply cap</button><br/><br/>
         <button >total supply</button><br/><br/>
         <button >transfer</button><br/><br/>
