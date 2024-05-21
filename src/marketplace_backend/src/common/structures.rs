@@ -77,6 +77,30 @@ pub struct CollectionNfts {
     pub tkn_ids: Vec<u64>
 }
 
+#[derive(CandidType, Deserialize, Debug, Serialize, Clone, Copy)]
+pub struct NftMarketData {
+    pub owner: Principal,
+    pub price: Option<u32>,
+    pub on_sale: bool
+}
+
+impl Storable for NftMarketData {
+    fn to_bytes(&self) -> Cow<[u8]> { 
+
+        Cow::Owned(serde_json::to_string(self).expect("failed to serialize to bytes").as_bytes().to_vec())
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+
+        serde_json::from_str(String::from_utf8(bytes.to_vec()).expect("failed to serialize from bytes").as_str())
+            .expect("failed to serialize from bytes")
+    }
+
+    const BOUND: Bound = Bound::Bounded {
+        max_size: 2048,
+        is_fixed_size: false,
+    };
+}
 
 #[derive(CandidType, Deserialize, Debug, Serialize, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
 pub struct OwnersDoubleKey {

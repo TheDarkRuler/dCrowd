@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
-use candid::{Nat, Principal};
+use candid::Principal;
 use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
+use icrc_ledger_types::icrc1::account::Account;
 use crate::common::guards::caller_is_auth;
-use crate::common::structures::{CollectionFullInfo, OwnersDoubleKey};
+use crate::common::structures::{CollectionFullInfo, NftMarketData, OwnersDoubleKey};
 use crate::memory::{get_owners_nft, get_record_collections};
 
 ///
@@ -145,28 +146,110 @@ pub fn get_all_collections(offset: u32, limit: u32) -> Result<Vec<CollectionFull
 /// * Error: if the canister id does not exist
 /// 
 #[ic_cdk::query(guard = "caller_is_auth")]
-pub fn get_all_nfts(offset: u32, limit: u32) -> Result<HashMap<OwnersDoubleKey, Principal>, String> {
+pub fn get_all_nfts(offset: u32, limit: u32) -> Result<HashMap<OwnersDoubleKey, NftMarketData>, String> {
 
     let res = get_owners_nft()
         .iter()
         .skip(offset as usize)
         .take(limit as usize)
         .map(|x| (*x.0, *x.1))
-        .collect::<HashMap<OwnersDoubleKey, Principal>>();
+        .collect::<HashMap<OwnersDoubleKey, NftMarketData>>();
     if res.len() == 0 {
         return Err("no collections present".to_string())
     }
     Ok(res)
 }
 
-pub async fn check_balance(owner: String, tkn_id: u128) -> Result<bool, String> {
-    let res = ic_cdk::call::<((Principal, Option<Vec<u8>>),), (Result<Nat, _>,)>
-        ( MAINNET_LEDGER_CANISTER_ID, "icrc1_balance_of", ((Principal::from_text(owner).expect("unable to transform to principal"), None), ), )
-    .await 
-    .map_err(|e| format!("failed to call ledger: {:?}", e))?
-    .0
-    .map_err(|e: Nat| format!("ledger transfer error {:?}", e));
+/// 
+/// Function that checks if the balance of an account is enough to purchase an NFT passed.
+/// 
+/// ## Arguments
+/// * `owner` - Offset of the first element to retrieve
+/// * `tkn_id` - Number of elements to retrieve
+/// * `collection_id` - id of the collection canister
+/// 
+/// ## Returns
+/// * Ok: true of false if the balance is enough
+/// * Error: String of error
+/// 
+#[ic_cdk::update(guard = "caller_is_auth", composite = true)]
+pub async fn check_balance(owner: Option<String>, tkn_id: u64, collection_id: String) -> Result<u128, String> {
 
-    Ok(false)
+    let owner = match owner {
+        Some(x) => Principal::from_text(x).expect("unable to parse owner to principal"),
+        None => ic_cdk::caller(),
+    }; 
+
+    let price = match get_owners_nft()
+        .get(&OwnersDoubleKey { 
+            collection_id: Principal::from_text(&collection_id).expect("cannot convert from text to principal"), 
+            tkn_id 
+        }) {
+        
+        Some(&x) => {
+            match x.price {
+                Some(price) => {
+                    get_discount(price, collection_id, x.owner)
+                },
+                None => Err("Nft price not present".to_string()),
+            }
+        },
+        None => Err("Nft does not exists".to_string()),        
+    }?;
+
+    let balance = ic_cdk::call::<(Account,), (u128,)>
+        ( MAINNET_LEDGER_CANISTER_ID, "icrc1_balance_of", (Account::from(owner),) )
+        .await 
+        .map_err(|e| format!("failed to call ledger: {:?}", e))?.0;
+
+    let fee = ic_cdk::call::<(), (u128,)>
+        ( MAINNET_LEDGER_CANISTER_ID, "icrc1_fee", () )
+        .await 
+        .map_err(|e| format!("failed to call ledger: {:?}", e))?.0;
+
+    if (price + fee) <= balance {
+        return Ok(price + fee)
+    }
+    Err("Low balance".to_string())
+
+}
+
+
+/// 
+/// Function that checks if the collection assigned to the NFT is expired or if it is owned by another person and returnes the price either discounted or not 
+/// based on the discount windows of the collection.
+/// 
+/// ## Arguments
+/// * `price` - default price of the NFT
+/// * `collection_id` - id of the collection canister
+/// * `owner` - owner of the NFT
+/// 
+/// ## Returns
+/// * Ok: price either discounted or not based on the ownage of the NFT and the discount windows
+/// * Error: collection expired or parsing errors
+/// 
+fn get_discount(price: u32, collection_id: String, owner: Principal) -> Result<u128, String> {
+
+    let now = ic_cdk::api::time();
+    let price = price as u128;
+    let binding = get_record_collections();
+    let collection_info = binding
+        .get(&Principal::from_text(collection_id).expect("unable to parse collection id to pricipal"))
+        .expect("collection does not exists");
+
+    if owner != collection_info.owner {
+        return Ok(price)
+    } else if now > collection_info.expire_date {
+        return Err("collection Expired".to_string());
+    }
+
+    match collection_info.discount_windows
+        .iter()
+        .filter(|x| x.expire_date > now)
+        .min_by_key(|x| x.expire_date) {
+
+        Some(x) => Ok(price - ((price * (x.discount_percentage as u128)) / 100)),
+        None => Ok(price),
+    }
 }
 

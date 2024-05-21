@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use candid::{Nat, Principal};
+use candid::Principal;
 use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::BlockIndex;
@@ -114,7 +114,7 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
             if mint_result.is_err() {
                 return Err(mint_result.err().expect("error message not loaded"));
             }
-            insert_owner_nft(canister_id, tkn_id as u64, caller);
+            insert_owner_nft(canister_id, tkn_id as u64, caller, Some(x.price), true);
             tkn_id += 1;
             mint_arg.token_id = tkn_id;
         }
@@ -157,7 +157,8 @@ async fn transfer(args: TransferArgs) -> Result<BlockIndex, String> {
         created_at_time: None,
     };
 
-    ic_cdk::call::<(TransferFromArgs,), (Result<BlockIndex, TransferFromError>,)>( MAINNET_LEDGER_CANISTER_ID, "icrc2_transfer_from", (transfer_from_args,), )
+    ic_cdk::call::<(TransferFromArgs,), (Result<BlockIndex, TransferFromError>,)>
+    ( MAINNET_LEDGER_CANISTER_ID, "icrc2_transfer_from", (transfer_from_args,), )
     .await 
     .map_err(|e| format!("failed to call ledger: {:?}", e))?
     .0
@@ -186,10 +187,9 @@ async fn transfer(args: TransferArgs) -> Result<BlockIndex, String> {
 ///   })
 /// "
 #[ic_cdk::update(guard = "caller_is_auth")]
-pub async fn transfer_nft(args: TransferArgs) -> Result<Nat, String> {
+pub async fn transfer_nft(args: TransferArgs) -> Result<String, String> {
     match transfer(args).await {
-        Ok(_) => ic_cdk::println!("lesgoooooooooooooo"),
-        Err(e) => ic_cdk::println!("{:?} nooooooooooooooooo", e),
-    };
-    Err("crying".to_string())
+        Ok(_) => Ok("token transfered correctly".to_string()),
+        Err(e) => Err(format!("error in transfering tokens: {}", e)),
+    }
 }

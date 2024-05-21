@@ -114,9 +114,9 @@ function App() {
         token_privilege_code: 2,
         price: 5_000
       }],
-      expire_date : BigInt(Date.now() * 1_000_000 + 1_000_000_000_000),
+      expire_date : BigInt(Date.now() * 1_000_000 + 1_000_000_000_000_000_000),
       discount_windows: [{
-          expire_date: BigInt(Date.now() * 1_000_000 + 1_000_000_000 ),
+          expire_date: BigInt(Date.now() * 1_000_000 + 1_000_000_000_000_000 ),
           discount_percentage: 10
         }]
     });
@@ -174,7 +174,11 @@ function App() {
 
   async function buy() {
     const canisterIcircId = document.querySelector<HTMLInputElement>("#canisterIDforBuy")!.value
-    console.log(await actorLedger.icrc1_name())
+    const NFTid = document.querySelector<HTMLInputElement>("#NFTforBuy")!.value
+
+    let has_money = await actorBackend.check_balance([], BigInt(NFTid), canisterIcircId)
+    console.log(has_money)
+
     let res = await actorLedger.icrc2_approve({
       from_subaccount: [],
       spender: {
@@ -203,7 +207,7 @@ function App() {
       })
 
       await actorBackend.transfer_nft({
-        amount: 9999659350n,
+        amount: 1n,
         to_account: {
           owner: Principal.fromText("pofdv-klrb4-bqcke-d5tgu-tozrk-pdzpy-vzmep-depus-afiqw-s2n5e-nae"),
           subaccount: []
@@ -223,6 +227,7 @@ function App() {
       console.log(first.allowance)
       console.log(second.allowance)
     } else {
+      console.log(res)
       console.log("nooooooooooooooooooo    asdas das dasd as")
     }
 
@@ -261,6 +266,7 @@ function App() {
         <button onClick={display_nfts}>get all nfts</button><br/><br/>
         <button onClick={timestamp}>get time</button><br/><br/>
         <input id="canisterIDforBuy" type="text"/><br/>
+        <input id="NFTforBuy" type="text"/><br/>
         <button onClick={buy}>BUY</button><br/><br/>
         <button onClick={displayAllCollections}>display all collections and NFTs</button><br/><br/>
         <button >show token metadata</button><br/><br/>
