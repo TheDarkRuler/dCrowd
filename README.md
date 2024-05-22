@@ -1,17 +1,6 @@
-# icrc7
+# dCrows
 
-Welcome to your new icrc7 project and to the Internet Computer development community. By default, creating a new project adds this README and some template files to your project directory. You can edit these template files to customize your project and to include your own code to speed up the development cycle.
-
-To get started, you might want to explore the project directory structure and the default configuration file. Working with this project in your development environment will not affect any production deployment or identity tokens.
-
-To learn more before you start working with icrc7, see the following documentation available online:
-
-- [Quick Start](https://internetcomputer.org/docs/current/developer-docs/setup/deploy-locally)
-- [SDK Developer Tools](https://internetcomputer.org/docs/current/developer-docs/setup/install)
-- [Rust Canister Development Guide](https://internetcomputer.org/docs/current/developer-docs/backend/rust/)
-- [ic-cdk](https://docs.rs/ic-cdk)
-- [ic-cdk-macros](https://docs.rs/ic-cdk-macros)
-- [Candid Introduction](https://internetcomputer.org/docs/current/developer-docs/backend/candid/)
+Un marketplace decentralizzato basato su blockchain (in Rust e compilata in WebAssembly per l'esecuzione su Internet Computer Protocol) che permette la creazione e la vendita di NFT (basandosi su standard ICRC-7 and others) per finanziare eventi. Questa piattaforma utilizza gli NFT come strumenti per il crowdfunding, consentendo agli organizzatori di eventi di raccogliere fondi direttamente dalla comunità. Gli acquirenti degli NFT ricevono in cambio diritti particolari o benefici esclusivi legati agli eventi supportati, come accesso prioritario o contenuti speciali. La piattaforma è costruita per garantire trasparenza e sicurezza nelle transazioni, utilizzando smart contracts per automatizzare la distribuzione dei fondi e dei premi in modo equo ed efficiente.
 
 If you want to start working on your project right away, you might want to try the following commands:
 
@@ -31,6 +20,36 @@ dfx start --background
 
 # Deploys your canisters to the replica and generates your candid interface
 dfx deploy
+
+# Create new identity which will be the minter identity
+dfx identity new minter
+
+# Export constants
+export MINTER_ACCOUNT_ID=$(dfx ledger account-id) 
+export DEFAULT_ACCOUNT_ID=$(dfx ledger account-id) 
+
+# Create local replica of the ledger for transfering tokens
+dfx deploy --specified-id ryjl3-tyaaa-aaaaa-aaaba-cai icp_ledger_canister --argument "
+  (variant {
+    Init = record {
+      minting_account = \"$MINTER_ACCOUNT_ID\";
+      initial_values = vec {
+        record {
+          \"$DEFAULT_ACCOUNT_ID\";
+          record {
+            e8s = 10_000_000_000 : nat64;
+          };
+        };
+      };
+      send_whitelist = vec {};
+      transfer_fee = opt record {
+        e8s = 10_000 : nat64;
+      };
+      token_symbol = opt \"LICP\";
+      token_name = opt \"Local ICP\";
+    }
+  })
+"
 ```
 
 Once the job completes, your application will be available at `http://localhost:4943?canisterId={asset_canister_id}`.

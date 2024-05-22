@@ -1,11 +1,11 @@
-import { HttpAgent, Identity, Agent, ActorSubclass } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/agent";
-import { AuthClient } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/auth-client";
+import { HttpAgent, Identity, Agent, ActorSubclass } from "@dfinity/agent";
+import { AuthClient } from "@dfinity/auth-client";
 import { createActor as createBackendActor, marketplace_backend } from "../../declarations/marketplace_backend";
 import { createActor as createIcrcActor} from "../../declarations/icrc7";
 import { createActor as createLedgerActor, icp_ledger_canister } from "../../declarations/icp_ledger_canister";
 import { _SERVICE } from "../../declarations/icrc7/icrc7.did";
 import { isSafari } from 'react-device-detect';
-import { Principal } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/principal/lib/cjs/index";
+import { Principal } from "@dfinity/principal";
 import { PurchaseNft } from "./lib/utils";
 
 function App() {

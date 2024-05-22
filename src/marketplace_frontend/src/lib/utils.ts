@@ -1,8 +1,8 @@
-import { Principal } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/principal/lib/cjs/index";
+import { Principal } from "@dfinity/principal";
 import { icp_ledger_canister } from "../../../declarations/icp_ledger_canister"
 import { _SERVICE as LEDG_SERVICE } from "../../../declarations/icp_ledger_canister/icp_ledger_canister.did"
 import { _SERVICE as BACK_SERVICE } from "../../../declarations/marketplace_backend/marketplace_backend.did";
-import { ActorSubclass } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/agent";
+import { ActorSubclass } from "@dfinity/agent";
 
 
 /**
