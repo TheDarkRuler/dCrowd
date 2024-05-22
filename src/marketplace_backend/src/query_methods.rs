@@ -211,7 +211,7 @@ pub async fn check_balance(owner: Option<String>, tkn_id: u64, collection_id: St
         .map_err(|e| format!("failed to call ledger: {:?}", e))?.0;
 
     if (price + fee) <= balance {
-        return Ok(price + fee)
+        return Ok(price)
     }
     Err("Low balance".to_string())
 

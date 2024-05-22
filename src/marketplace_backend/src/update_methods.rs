@@ -125,11 +125,11 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
 /// * `Ok`: Transaction id
 /// * `Error`: String with some details about what went wrong
 /// 
-async fn transfer(args: TransferArgs, caller: Principal) -> Result<BlockIndex, String> {
+async fn transfer(args: TransferArgs, owner_nft: Principal) -> Result<BlockIndex, String> {
     ic_cdk::println!(
         "Transferring {} tokens to account {}",
         &args.amount,
-        &caller,
+        &owner_nft,
     );
 
     let transfer_from_args = TransferFromArgs {
@@ -138,7 +138,7 @@ async fn transfer(args: TransferArgs, caller: Principal) -> Result<BlockIndex, S
         amount: args.amount,
         spender_subaccount: None,
         fee: None,
-        to: Account::from(caller),
+        to: Account::from(owner_nft),
         created_at_time: None,
     };
 
@@ -208,7 +208,7 @@ pub async fn transfer_nft(args: TransferArgs) -> Result<String, String> {
     let owner_nft = owner_nft.unwrap().owner;
     let caller = ic_cdk::caller();
     
-    let transfer_token = transfer(args.clone(), caller).await;
+    let transfer_token = transfer(args.clone(), owner_nft).await;
     if let Some(e) = transfer_token.err() {
         return Err(format!("Error in transfering tokens: {}", e))
     }
