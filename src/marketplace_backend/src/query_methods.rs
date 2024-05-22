@@ -172,7 +172,7 @@ pub fn get_all_nfts(offset: u32, limit: u32) -> Result<HashMap<OwnersDoubleKey, 
 /// * Ok: true of false if the balance is enough
 /// * Error: String of error
 /// 
-#[ic_cdk::update(guard = "caller_is_auth", composite = true)]
+#[ic_cdk::query(guard = "caller_is_auth", composite = true)]
 pub async fn check_balance(owner: Option<String>, tkn_id: u64, collection_id: String) -> Result<u128, String> {
 
     let owner = match owner {
@@ -187,11 +187,14 @@ pub async fn check_balance(owner: Option<String>, tkn_id: u64, collection_id: St
         }) {
         
         Some(&x) => {
+            if !x.on_sale {
+                return Err("NFT not on sale".to_string());
+            }
             match x.price {
                 Some(price) => {
                     get_discount(price, collection_id, x.owner)
                 },
-                None => Err("Nft price not present".to_string()),
+                None => Err("NFT price not present".to_string()),
             }
         },
         None => Err("Nft does not exists".to_string()),        

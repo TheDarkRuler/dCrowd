@@ -6,6 +6,7 @@ import { createActor as createLedgerActor, icp_ledger_canister } from "../../dec
 import { _SERVICE } from "../../declarations/icrc7/icrc7.did";
 import { isSafari } from 'react-device-detect';
 import { Principal } from "/home/formazione/Desktop/testICP/icrc7/node_modules/@dfinity/principal/lib/cjs/index";
+import { PurchaseNft } from "./lib/utils";
 
 function App() {
 
@@ -172,69 +173,6 @@ function App() {
     console.log(window.performance.now())
   }
 
-  async function buy() {
-    const canisterIcircId = document.querySelector<HTMLInputElement>("#canisterIDforBuy")!.value
-    const NFTid = document.querySelector<HTMLInputElement>("#NFTforBuy")!.value
-
-    let has_money = await actorBackend.check_balance([], BigInt(NFTid), canisterIcircId)
-    console.log(has_money)
-
-    let res = await actorLedger.icrc2_approve({
-      from_subaccount: [],
-      spender: {
-        owner: Principal.fromText(process.env.CANISTER_ID_MARKETPLACE_BACKEND as string),
-        subaccount: []
-      },
-      amount: 999965935000n + await icp_ledger_canister.icrc1_fee(),
-      expected_allowance: [],
-      expires_at: [],
-      fee: [],
-      memo: [],
-      created_at_time: [],
-    })
-
-    if ('Ok' in res) {
-
-      let first = await actorLedger.icrc2_allowance({
-        account: {
-          owner: Principal.fromText("xgad6-k6unb-6xhhm-tfnjm-5mq6w-sr7p5-fwlau-ggonc-diqie-ngpjd-tqe"),
-          subaccount: []
-        },
-        spender: {
-          owner: Principal.fromText(process.env.CANISTER_ID_MARKETPLACE_BACKEND as string),
-          subaccount: []
-        }
-      })
-
-      await actorBackend.transfer_nft({
-        amount: 1n,
-        to_account: {
-          owner: Principal.fromText("pofdv-klrb4-bqcke-d5tgu-tozrk-pdzpy-vzmep-depus-afiqw-s2n5e-nae"),
-          subaccount: []
-        }
-      })
-
-      let second = await actorLedger.icrc2_allowance({
-        account: {
-          owner: Principal.fromText("xgad6-k6unb-6xhhm-tfnjm-5mq6w-sr7p5-fwlau-ggonc-diqie-ngpjd-tqe"),
-          subaccount: []
-        },
-        spender: {
-          owner: Principal.fromText(process.env.CANISTER_ID_MARKETPLACE_BACKEND as string),
-          subaccount: []
-        }
-      })
-      console.log(first.allowance)
-      console.log(second.allowance)
-    } else {
-      console.log(res)
-      console.log("nooooooooooooooooooo    asdas das dasd as")
-    }
-
-   
-
-  }
-
   async function displayAllCollections() {
     const res = await actorBackend.get_all_collections(0, 10)
     if ("Ok" in res) {
@@ -267,7 +205,7 @@ function App() {
         <button onClick={timestamp}>get time</button><br/><br/>
         <input id="canisterIDforBuy" type="text"/><br/>
         <input id="NFTforBuy" type="text"/><br/>
-        <button onClick={buy}>BUY</button><br/><br/>
+        <button onClick={() => PurchaseNft(actorBackend, actorLedger)}>BUY</button><br/><br/>
         <button onClick={displayAllCollections}>display all collections and NFTs</button><br/><br/>
         <button >show token metadata</button><br/><br/>
         <button onClick={displayNfts}>all nfts</button><br/><br/>

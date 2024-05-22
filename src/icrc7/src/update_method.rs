@@ -24,8 +24,11 @@ pub fn icrc7_mint(arg: MintArg, caller: Option<Principal>) -> MintResult {
 }
 
 #[update]
-pub fn icrc7_transfer(args: Vec<TransferArg>) -> Vec<Option<TransferResult>> {
-    let caller = ic_cdk::caller();
+pub fn icrc7_transfer(args: Vec<TransferArg>, caller: Option<Principal>) -> Vec<Option<TransferResult>> {
+    let caller = match caller {
+        Some(x) => x,
+        None => ic_cdk::caller(),
+    };
     STATE.with(|s| s.borrow_mut().icrc7_transfer(&caller, args))
 }
 

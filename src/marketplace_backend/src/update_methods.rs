@@ -1,15 +1,14 @@
 use std::str::FromStr;
-
 use candid::Principal;
 use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::BlockIndex;
 use icrc_ledger_types::icrc2::transfer_from::{TransferFromArgs, TransferFromError};
 
-use crate::common::structures::{CollectionInfo, CollectionNfts, Errors, MintArg, TransferArgs};
+use crate::common::structures::{CollectionInfo, CollectionNfts, Errors, IcrcTransferArg, MintArg, OwnersDoubleKey, TransferArgs, TransferError};
 use crate::common::{guards::caller_is_auth, structures::Arg};
 use crate::factory::mint_collection_canister;
-use crate::memory::{insert_owner_nft, insert_record_collection};
+use crate::memory::{get_owners_nft, insert_owner_nft, insert_record_collection};
 
 ///
 /// Creates a collection of nft using the ICRC-7 standard and saves in database the principal of the owner of the colletion and the id of the canister collection.
@@ -140,11 +139,11 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
 /// * Ok: Transaction id
 /// * Error: String with some details about what went wrong
 /// 
-async fn transfer(args: TransferArgs) -> Result<BlockIndex, String> {
+async fn transfer(args: TransferArgs, caller: Principal) -> Result<BlockIndex, String> {
     ic_cdk::println!(
         "Transferring {} tokens to account {}",
         &args.amount,
-        &args.to_account,
+        &caller,
     );
 
     let transfer_from_args = TransferFromArgs {
@@ -153,18 +152,19 @@ async fn transfer(args: TransferArgs) -> Result<BlockIndex, String> {
         amount: args.amount,
         spender_subaccount: None,
         fee: None,
-        to: args.to_account,
+        to: Account::from(caller),
         created_at_time: None,
     };
 
     ic_cdk::call::<(TransferFromArgs,), (Result<BlockIndex, TransferFromError>,)>
-    ( MAINNET_LEDGER_CANISTER_ID, "icrc2_transfer_from", (transfer_from_args,), )
-    .await 
-    .map_err(|e| format!("failed to call ledger: {:?}", e))?
-    .0
-    .map_err(|e| format!("ledger transfer error {:?}", e))
+        ( MAINNET_LEDGER_CANISTER_ID, "icrc2_transfer_from", (transfer_from_args,), )
+            .await 
+            .map_err(|e| format!("failed to call ledger: {:?}", e))?
+            .0
+            .map_err(|e| format!("ledger transfer error {:?}", e))
 }
 
+/// 
 /// dfx deploy --specified-id ryjl3-tyaaa-aaaaa-aaaba-cai icp_ledger_canister --argument "
 ///   (variant {
 ///     Init = record {
@@ -186,10 +186,59 @@ async fn transfer(args: TransferArgs) -> Result<BlockIndex, String> {
 ///     }
 ///   })
 /// "
+/// 
+/// #[derive(CandidType, Deserialize, Clone, Debug)]
+/// 
 #[ic_cdk::update(guard = "caller_is_auth")]
 pub async fn transfer_nft(args: TransferArgs) -> Result<String, String> {
-    match transfer(args).await {
-        Ok(_) => Ok("token transfered correctly".to_string()),
-        Err(e) => Err(format!("error in transfering tokens: {}", e)),
+    let collection_id = Principal::from_text(args.clone().collection_id).expect("unable to parse string to principal");
+
+    let binding = get_owners_nft();
+    let owner_nft = binding
+        .get(
+            &OwnersDoubleKey {
+                collection_id: Principal::from_text(args.clone().collection_id).expect("unable to convert collection id to principal"), 
+                tkn_id: args.tkn_id as u64
+            });
+
+    if owner_nft.is_none() {
+        return Err("nft does not exists".to_string());
+    }
+
+    let owner_nft = owner_nft.unwrap().owner;
+
+    let caller = ic_cdk::caller();
+    match transfer(args.clone(), caller).await {
+        Ok(_) => {
+            let transfer_result: Result<u128, TransferError> = match ic_cdk::call::<(Vec<IcrcTransferArg>, Option<Principal> ), (Vec<Option<Result<u128, TransferError>>>,)>(
+                collection_id, 
+                "icrc7_transfer", 
+                ([IcrcTransferArg {
+                    from_subaccount: None, 
+                    to: Account::from(caller), 
+                    token_id: args.tkn_id, 
+                    memo: None, 
+                    created_at_time: None
+                }].to_vec(), Some(owner_nft), ), ).await
+            .map_err(|e| format!("failed to call ledger: {:?}", e))?
+            .0.first() {
+                Some(trasfer_el) => {
+                    match trasfer_el {
+                        Some(x) => x.clone(),
+                        None => Err(TransferError::GenericError { error_code: 400, message: "error in transfering NFT".to_string() }),
+                    }                        
+                },
+                None => Err(TransferError::GenericError { error_code: 400, message: "error in transfering NFT".to_string() })
+            };
+
+            match transfer_result {
+                Ok(_) => {
+                    insert_owner_nft(collection_id, args.tkn_id as u64, caller, None, false);
+                    Ok(format!("NFT with token id: {}, transferred from {} to {} correctly", args.tkn_id, owner_nft, caller))
+                },
+                Err(e) => return Err(format!("Error in transfering NFT {:?}", e)),                
+            }
+        },
+        Err(e) => Err(format!("Error in transfering tokens: {}", e)),
     }
 }

@@ -32,6 +32,17 @@ type Errors = variant {
   TokenIdAlreadyExist;
 };
 
+type TransferError = variant {
+  GenericError : record { message : text; error_code : nat };
+  Duplicate : record { duplicate_of : nat };
+  NonExistingTokenId;
+  Unauthorized;
+  CreatedInFuture : record { ledger_time : nat64 };
+  InvalidRecipient;
+  GenericBatchError : record { message : text; error_code : nat };
+  TooOld;
+};
+
 type DiscountWindowArg = record { 
   expire_date: nat64; 
   discount_percentage: nat8; 
@@ -61,8 +72,9 @@ type SubAccount = blob;
 type Account = record { owner : principal; subaccount : opt SubAccount };
 
 type TransferArgs = record { 
-  to_account : Account; 
   amount : nat; 
+  tkn_id : nat;
+  collection_id : text;
 };
 
 type OwnersDoubleKey = record {
@@ -83,6 +95,6 @@ service : {
   get_all_collections : (offset: nat32, limit: nat32) -> (variant { Ok : vec CanisterFullInfo; Err: text});
   get_collection_viability : (canister_id: principal) -> (variant { Ok : bool; Err: text});
   get_all_nfts : (offset: nat32, limit: nat32) -> (variant { Ok : vec record { OwnersDoubleKey; NftMarketData }; Err: text});
-  transfer_nft : (args: TransferArgs) ->  (variant { Ok : nat; Err : text });
-  check_balance : (owner: opt text, tkn_id: nat64, collection_id: text) ->  (variant { Ok : nat; Err : text });
+  transfer_nft : (args: TransferArgs) ->  (variant { Ok : text; Err : text });
+  check_balance : (owner: opt text, tkn_id: nat64, collection_id: text) ->  (variant { Ok : nat; Err : text }) composite_query;
 }

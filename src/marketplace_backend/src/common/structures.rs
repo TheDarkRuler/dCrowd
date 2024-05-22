@@ -203,5 +203,27 @@ impl Storable for CollectionInfo {
 #[derive(CandidType, Deserialize, Serialize, Clone)]
 pub struct TransferArgs {
     pub amount: icrc_ledger_types::icrc1::transfer::NumTokens,
-    pub to_account: Account,
+    pub tkn_id: u128,
+    pub collection_id: String
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum TransferError {
+    NonExistingTokenId,
+    InvalidRecipient,
+    Unauthorized,
+    TooOld,
+    CreatedInFuture { ledger_time: u64 },
+    Duplicate { duplicate_of: u128 },
+    GenericError { error_code: u128, message: String },
+    GenericBatchError { error_code: u128, message: String },
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct IcrcTransferArg {
+    pub from_subaccount: Option<[u8; 32]>,
+    pub to: Account,
+    pub token_id: u128,
+    pub memo: Option<Vec<u8>>,
+    pub created_at_time: Option<u64>,
 }
