@@ -82,6 +82,7 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
             error_code: 400
         }),
     };
+    
     let mut tkn_id = 1;
     let caller = ic_cdk::caller();
 
@@ -131,9 +132,11 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
 ///
 /// ## Arguments
 ///     type TransferArgs = record { 
-///         to_account : Account; 
-///         amount : nat; 
+///       amount : nat; 
+///       tkn_id : nat;
+///       collection_id : text;
 ///     };
+/// * caller: account to which the nft will be transferred
 /// 
 /// ## Returns
 /// * Ok: Transaction id
@@ -186,8 +189,22 @@ async fn transfer(args: TransferArgs, caller: Principal) -> Result<BlockIndex, S
 ///     }
 ///   })
 /// "
+
+
+
+///
+/// Transfer NFT from an account to another,
+///
+/// ## Arguments
+///     type TransferArgs = record { 
+///       amount : nat; 
+///       tkn_id : nat;
+///       collection_id : text;
+///     };
 /// 
-/// #[derive(CandidType, Deserialize, Clone, Debug)]
+/// ## Returns
+/// * Ok: Successful message
+/// * Error: String with some details about what went wrong
 /// 
 #[ic_cdk::update(guard = "caller_is_auth")]
 pub async fn transfer_nft(args: TransferArgs) -> Result<String, String> {
@@ -206,39 +223,40 @@ pub async fn transfer_nft(args: TransferArgs) -> Result<String, String> {
     }
 
     let owner_nft = owner_nft.unwrap().owner;
-
     let caller = ic_cdk::caller();
-    match transfer(args.clone(), caller).await {
-        Ok(_) => {
-            let transfer_result: Result<u128, TransferError> = match ic_cdk::call::<(Vec<IcrcTransferArg>, Option<Principal> ), (Vec<Option<Result<u128, TransferError>>>,)>(
-                collection_id, 
-                "icrc7_transfer", 
-                ([IcrcTransferArg {
-                    from_subaccount: None, 
-                    to: Account::from(caller), 
-                    token_id: args.tkn_id, 
-                    memo: None, 
-                    created_at_time: None
-                }].to_vec(), Some(owner_nft), ), ).await
-            .map_err(|e| format!("failed to call ledger: {:?}", e))?
-            .0.first() {
-                Some(trasfer_el) => {
-                    match trasfer_el {
-                        Some(x) => x.clone(),
-                        None => Err(TransferError::GenericError { error_code: 400, message: "error in transfering NFT".to_string() }),
-                    }                        
-                },
-                None => Err(TransferError::GenericError { error_code: 400, message: "error in transfering NFT".to_string() })
-            };
+    
+    let transfer_token = transfer(args.clone(), caller).await;
+    if let Some(e) = transfer_token.err() {
+        return Err(format!("Error in transfering tokens: {}", e))
+    }
 
-            match transfer_result {
-                Ok(_) => {
-                    insert_owner_nft(collection_id, args.tkn_id as u64, caller, None, false);
-                    Ok(format!("NFT with token id: {}, transferred from {} to {} correctly", args.tkn_id, owner_nft, caller))
-                },
-                Err(e) => return Err(format!("Error in transfering NFT {:?}", e)),                
-            }
+    let transfer_nft: Result<u128, TransferError> = match ic_cdk::call::<(Vec<IcrcTransferArg>, Option<Principal> ), (Vec<Option<Result<u128, TransferError>>>,)>(
+        collection_id, 
+        "icrc7_transfer", 
+        ([IcrcTransferArg {
+            from_subaccount: None, 
+            to: Account::from(caller), 
+            token_id: args.tkn_id, 
+            memo: None, 
+            created_at_time: None
+        }].to_vec(), Some(owner_nft), ), )
+    .await
+    .map_err(|e| format!("failed to call ledger: {:?}", e))?
+    .0.first() {
+        Some(trasfer_el) => {
+            match trasfer_el {
+                Some(x) => x.clone(),
+                None => Err(TransferError::GenericError { error_code: 400, message: "error in transfering NFT".to_string() }),
+            }                        
         },
-        Err(e) => Err(format!("Error in transfering tokens: {}", e)),
+        None => Err(TransferError::GenericError { error_code: 400, message: "error in transfering NFT".to_string() })
+    };
+
+    match transfer_nft {
+        Ok(_) => {
+            insert_owner_nft(collection_id, args.tkn_id as u64, caller, None, false);
+            Ok(format!("NFT with token id: {}, transferred from {} to {} correctly", args.tkn_id, owner_nft, caller))
+        },
+        Err(e) => return Err(format!("Error in transfering NFT {:?}", e)),                
     }
 }
