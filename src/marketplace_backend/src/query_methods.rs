@@ -5,7 +5,7 @@ use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
 use icrc_ledger_types::icrc1::account::Account;
 use crate::common::guards::caller_is_auth;
 use crate::common::structures::{CollectionFullInfo, NftMarketData, OwnersDoubleKey};
-use crate::memory::{get_owners_nft, get_record_collections};
+use crate::memory::{get_nfts, get_collections};
 
 ///
 /// Gets the list of canisters assigned to the caller
@@ -18,8 +18,8 @@ use crate::memory::{get_owners_nft, get_record_collections};
 /// * `limit` - Number of elements to retrieve
 /// 
 /// ## Returns
-/// * Ok: List of canister assigned to the caller
-/// * Error: if the caller does not have any collection or it encouters a problem on transforming the string to pricipal
+/// * `Ok`: List of canister assigned to the caller
+/// * `Error`: if the caller does not have any collection or it encouters a problem on transforming the string to pricipal
 /// 
 #[ic_cdk::query(guard = "caller_is_auth")]
 pub fn get_collection_ids(caller: Option<String>, offset: u32, limit: u32) -> Result<Vec<String>, String> {
@@ -28,7 +28,7 @@ pub fn get_collection_ids(caller: Option<String>, offset: u32, limit: u32) -> Re
         None => ic_cdk::caller(),
     };
 
-    let res = get_record_collections()
+    let res = get_collections()
         .iter()
         .filter(|x| (*x.1).owner == caller)
         .map(|x| x.0.to_string())
@@ -48,13 +48,13 @@ pub fn get_collection_ids(caller: Option<String>, offset: u32, limit: u32) -> Re
 /// * `canister_id` - Canister id of the collection
 /// 
 /// ## Returns
-/// * Ok: true if the collection is still available and false if not 
-/// * Error: if the canister id does not exist
+/// * `Ok`: true if the collection is still available and false if not 
+/// * `Error`: if the canister id does not exist
 /// 
 #[ic_cdk::query(guard = "caller_is_auth")]
 pub fn get_collection_viability(canister_id: Principal) -> Result<bool, String> {
 
-    let binding = get_record_collections();
+    let binding = get_collections();
     let val = match binding.get(&canister_id) {
         Some(x) => x,
         None => return Err("collection does not exists".to_string())
@@ -73,18 +73,18 @@ pub fn get_collection_viability(canister_id: Principal) -> Result<bool, String> 
 /// * `limit` - Number of elements to retrieve
 /// 
 /// ## Returns
-/// * Ok: all canisters assigned to a caller, including the availability boolean
-/// * Error: if the canister id does not exist
+/// * `Ok`: all canisters assigned to a caller, including the availability boolean
+/// * `Error`: if the canister id does not exist
 /// 
 #[ic_cdk::query(guard = "caller_is_auth")]
-pub fn get_all_collections_by_caller(caller: Option<String>, offset: u32, limit: u32) -> Result<Vec<CollectionFullInfo>, String> {
+pub fn get_collections_info_by_caller(caller: Option<String>, offset: u32, limit: u32) -> Result<Vec<CollectionFullInfo>, String> {
     
     let caller = match &caller {
         Some(x) => Principal::from_text(x).expect("Not able to convert string to principal"),
         None => ic_cdk::caller(),
     };
 
-    let res = get_record_collections()
+    let res = get_collections()
         .iter()
         .filter(|x| (*x.1).owner == caller)
         .map(|x| CollectionFullInfo { 
@@ -109,13 +109,13 @@ pub fn get_all_collections_by_caller(caller: Option<String>, offset: u32, limit:
 /// * `limit` - Number of elements to retrieve
 /// 
 /// ## Returns
-/// * Ok: all canisters including their availability 
-/// * Error: if the canister id does not exist
+/// * `Ok`: all canisters including their availability 
+/// * `Error`: no collection present or error in getting records
 /// 
 #[ic_cdk::query(guard = "caller_is_auth")]
 pub fn get_all_collections(offset: u32, limit: u32) -> Result<Vec<CollectionFullInfo>, String> {
 
-    let res = get_record_collections()
+    let res = get_collections()
         .iter()
         .map(|x| CollectionFullInfo { 
             owner: x.1.owner, 
@@ -135,20 +135,20 @@ pub fn get_all_collections(offset: u32, limit: u32) -> Result<Vec<CollectionFull
 }
 
 ///
-/// Returns all canisters including information about viability and deadlines.
+/// Returns all NFTs including their informations.
 /// 
 /// ## Arguments
 /// * `offset` - Offset of the first element to retrieve
 /// * `limit` - Number of elements to retrieve
 /// 
 /// ## Returns
-/// * Ok: all canisters including their availability 
-/// * Error: if the canister id does not exist
+/// * `Ok`: all NFTs including their availability 
+/// * `Error`: if no nfts can be retrieved, either caused by offset and limit problem or 0 records on the database
 /// 
 #[ic_cdk::query(guard = "caller_is_auth")]
 pub fn get_all_nfts(offset: u32, limit: u32) -> Result<HashMap<OwnersDoubleKey, NftMarketData>, String> {
 
-    let res = get_owners_nft()
+    let res = get_nfts()
         .iter()
         .skip(offset as usize)
         .take(limit as usize)
@@ -169,8 +169,8 @@ pub fn get_all_nfts(offset: u32, limit: u32) -> Result<HashMap<OwnersDoubleKey, 
 /// * `collection_id` - id of the collection canister
 /// 
 /// ## Returns
-/// * Ok: true of false if the balance is enough
-/// * Error: String of error
+/// * `Ok`: Full price of the nft
+/// * `Error`: Error string
 /// 
 #[ic_cdk::query(guard = "caller_is_auth", composite = true)]
 pub async fn check_balance(owner: Option<String>, tkn_id: u64, collection_id: String) -> Result<u128, String> {
@@ -180,7 +180,7 @@ pub async fn check_balance(owner: Option<String>, tkn_id: u64, collection_id: St
         None => ic_cdk::caller(),
     }; 
 
-    let price = match get_owners_nft()
+    let price = match get_nfts()
         .get(&OwnersDoubleKey { 
             collection_id: Principal::from_text(&collection_id).expect("cannot convert from text to principal"), 
             tkn_id 
@@ -228,14 +228,14 @@ pub async fn check_balance(owner: Option<String>, tkn_id: u64, collection_id: St
 /// * `owner` - owner of the NFT
 /// 
 /// ## Returns
-/// * Ok: price either discounted or not based on the ownage of the NFT and the discount windows
-/// * Error: collection expired or parsing errors
+/// * `Ok`: price either discounted or not, based on the ownage of the NFT and the discount windows
+/// * `Error`: collection expired or parsing errors
 /// 
 fn get_discount(price: u32, collection_id: String, owner: Principal) -> Result<u128, String> {
 
     let now = ic_cdk::api::time();
     let price = price as u128;
-    let binding = get_record_collections();
+    let binding = get_collections();
     let collection_info = binding
         .get(&Principal::from_text(collection_id).expect("unable to parse collection id to pricipal"))
         .expect("collection does not exists");

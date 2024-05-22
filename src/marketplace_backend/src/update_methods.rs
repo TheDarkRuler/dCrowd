@@ -8,46 +8,26 @@ use icrc_ledger_types::icrc2::transfer_from::{TransferFromArgs, TransferFromErro
 use crate::common::structures::{CollectionInfo, CollectionNfts, Errors, IcrcTransferArg, MintArg, OwnersDoubleKey, TransferArgs, TransferError};
 use crate::common::{guards::caller_is_auth, structures::Arg};
 use crate::factory::mint_collection_canister;
-use crate::memory::{get_owners_nft, insert_owner_nft, insert_record_collection};
+use crate::memory::{get_nfts, insert_nft_record, insert_collection_record};
 
 ///
 /// Creates a collection of nft using the ICRC-7 standard and saves in database the principal of the owner of the colletion and the id of the canister collection.
 /// Then creates NFTs to the values passed as arguments of different types (Ex: premium, standard, VIP).
 ///
 /// ## Arguments
-///     canister_arg: record {
-///           icrc7_supply_cap : nat;
-///           icrc7_description : opt text;
-///           tx_window : opt nat64;
-///           icrc7_max_query_batch_size : opt nat;
-///           permitted_drift : opt nat64;
-///           icrc7_max_take_value : opt nat;
-///           icrc7_max_memo_size : opt nat;
-///           icrc7_symbol : text;
-///           icrc7_max_update_batch_size : opt nat;
-///           icrc7_atomic_batch_transfers : opt bool;
-///           icrc7_default_take_value : opt nat;
-///           icrc7_logo : opt text;
-///           icrc7_name : text;
-///         };
-///     nfts: vec type NftMetadata = record {
-///           token_name: text;
-///           token_privilege_code: nat8;
-///           token_description: text;
-///           token_logo: text;
-///           quantity: nat;
-///         };
-///     expire_date: nat64;
-///     
-///     discount_windows: vec type DiscountWindowArg = record { 
-///           expire_date: nat64; 
-///           discount_percentage: nat8; 
-///         };
-///     };
+/// * `arg`: 
+/// ```
+///     pub struct Arg {
+///         pub canister_arg: CanisterArg,
+///         pub nfts: Vec<NftMetadata>,
+///         pub expire_date: u64,
+///         pub discount_windows: Vec<DiscountWindowArg>
+///     }
 /// 
+/// ```
 /// ## Returns
-/// * Ok: Canister id of the collection
-/// * Error: Error of type Errors
+/// * `Ok`: Successful message
+/// * `Error`: Error of type Errors
 /// 
 #[ic_cdk::update(guard = "caller_is_auth")]
 pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
@@ -82,7 +62,7 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
             error_code: 400
         }),
     };
-    
+
     let mut tkn_id = 1;
     let caller = ic_cdk::caller();
 
@@ -114,13 +94,13 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
             if mint_result.is_err() {
                 return Err(mint_result.err().expect("error message not loaded"));
             }
-            insert_owner_nft(canister_id, tkn_id as u64, caller, Some(x.price), true);
+            insert_nft_record(canister_id, tkn_id as u64, caller, Some(x.price), true);
             tkn_id += 1;
             mint_arg.token_id = tkn_id;
         }
         nfts.push(CollectionNfts {nft: x.clone(), tkn_ids});
     }
-    insert_record_collection(canister_id, CollectionInfo { owner: caller, expire_date: arg.expire_date, discount_windows: arg.discount_windows, nfts});
+    insert_collection_record(canister_id, CollectionInfo { owner: caller, expire_date: arg.expire_date, discount_windows: arg.discount_windows, nfts});
 
     Ok(canister_id.to_string())
 }
@@ -131,16 +111,19 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
 /// so that this canister can have the allowance to transfer tokens in behalf of the caller
 ///
 /// ## Arguments
+/// * `args`: 
+/// ```
 ///     type TransferArgs = record { 
 ///       amount : nat; 
 ///       tkn_id : nat;
 ///       collection_id : text;
 ///     };
+/// ```
 /// * caller: account to which the nft will be transferred
 /// 
 /// ## Returns
-/// * Ok: Transaction id
-/// * Error: String with some details about what went wrong
+/// * `Ok`: Transaction id
+/// * `Error`: String with some details about what went wrong
 /// 
 async fn transfer(args: TransferArgs, caller: Principal) -> Result<BlockIndex, String> {
     ic_cdk::println!(
@@ -167,35 +150,35 @@ async fn transfer(args: TransferArgs, caller: Principal) -> Result<BlockIndex, S
             .map_err(|e| format!("ledger transfer error {:?}", e))
 }
 
-/// 
-/// dfx deploy --specified-id ryjl3-tyaaa-aaaaa-aaaba-cai icp_ledger_canister --argument "
-///   (variant {
-///     Init = record {
-///       minting_account = \"$MINTER_ACCOUNT_ID\";
-///       initial_values = vec {
-///         record {
-///           \"$DEFAULT_ACCOUNT_ID\";
-///           record {
-///             e8s = 10_000_000_000 : nat64;
-///           };
-///         };
-///       };
-///       send_whitelist = vec {};
-///       transfer_fee = opt record {
-///         e8s = 10_000 : nat64;
-///       };
-///       token_symbol = opt \"LICP\";
-///       token_name = opt \"Local ICP\";
-///     }
-///   })
-/// "
-
-
+/* 
+dfx deploy --specified-id ryjl3-tyaaa-aaaaa-aaaba-cai icp_ledger_canister --argument "
+  (variant {
+    Init = record {
+      minting_account = \"$MINTER_ACCOUNT_ID\";
+      initial_values = vec {
+        record {
+          \"$DEFAULT_ACCOUNT_ID\";
+          record {
+            e8s = 10_000_000_000 : nat64;
+          };
+        };
+      };
+      send_whitelist = vec {};
+      transfer_fee = opt record {
+        e8s = 10_000 : nat64;
+      };
+      token_symbol = opt \"LICP\";
+      token_name = opt \"Local ICP\";
+    }
+  })
+"
+*/
 
 ///
 /// Transfer NFT from an account to another,
 ///
 /// ## Arguments
+/// * `args`:
 ///     type TransferArgs = record { 
 ///       amount : nat; 
 ///       tkn_id : nat;
@@ -203,14 +186,14 @@ async fn transfer(args: TransferArgs, caller: Principal) -> Result<BlockIndex, S
 ///     };
 /// 
 /// ## Returns
-/// * Ok: Successful message
-/// * Error: String with some details about what went wrong
+/// * `Ok`: Successful message
+/// * `Error`: String with some details about what went wrong
 /// 
 #[ic_cdk::update(guard = "caller_is_auth")]
 pub async fn transfer_nft(args: TransferArgs) -> Result<String, String> {
     let collection_id = Principal::from_text(args.clone().collection_id).expect("unable to parse string to principal");
 
-    let binding = get_owners_nft();
+    let binding = get_nfts();
     let owner_nft = binding
         .get(
             &OwnersDoubleKey {
@@ -254,7 +237,7 @@ pub async fn transfer_nft(args: TransferArgs) -> Result<String, String> {
 
     match transfer_nft {
         Ok(_) => {
-            insert_owner_nft(collection_id, args.tkn_id as u64, caller, None, false);
+            insert_nft_record(collection_id, args.tkn_id as u64, caller, None, false);
             Ok(format!("NFT with token id: {}, transferred from {} to {} correctly", args.tkn_id, owner_nft, caller))
         },
         Err(e) => return Err(format!("Error in transfering NFT {:?}", e)),                

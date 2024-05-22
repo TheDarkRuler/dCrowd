@@ -5,6 +5,9 @@ use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use icrc_ledger_types::icrc1::account::Account;
 
+///
+/// Init args of the collection of NFTs
+/// 
 #[derive(CandidType, Serialize)]
 pub struct InitArg {
     pub minting_account: Option<Account>,
@@ -23,6 +26,9 @@ pub struct InitArg {
     pub permitted_drift: Option<u64>,
 }
 
+///
+/// Short version of InitArg
+/// 
 #[derive(CandidType, Deserialize)]
 pub struct CanisterArg {
     pub icrc7_symbol: String,
@@ -61,6 +67,10 @@ impl From<(Account, CanisterArg)> for InitArg {
     }
 }
 
+///
+/// Metadata of a NFT including the quantity of that single NFT 
+/// Quantity is the number of nfts of that type that are going to be created
+/// 
 #[derive(CandidType, Deserialize, Debug, Serialize, Clone)]
 pub struct NftMetadata {
     pub token_name: String,
@@ -77,6 +87,9 @@ pub struct CollectionNfts {
     pub tkn_ids: Vec<u64>
 }
 
+/// 
+/// Marketplace data of the NFT
+/// 
 #[derive(CandidType, Deserialize, Debug, Serialize, Clone, Copy)]
 pub struct NftMarketData {
     pub owner: Principal,
@@ -102,6 +115,9 @@ impl Storable for NftMarketData {
     };
 }
 
+///
+/// Pair used as key for the NFT StableBTree
+/// 
 #[derive(CandidType, Deserialize, Debug, Serialize, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
 pub struct OwnersDoubleKey {
     pub collection_id: Principal,
@@ -127,12 +143,18 @@ impl Storable for OwnersDoubleKey {
     };
 }
 
+///
+/// Discount window including the expire date of the window and the percentage of sale
+/// 
 #[derive(Debug, Serialize, Deserialize, CandidType, Clone)]
 pub struct DiscountWindowArg {
     pub expire_date: u64,
     pub discount_percentage: u8 
 }
 
+///
+/// General arg passed to create a collection of NFTs
+/// 
 #[derive(CandidType, Deserialize)]
 pub struct Arg {
     pub canister_arg: CanisterArg,
@@ -141,6 +163,9 @@ pub struct Arg {
     pub discount_windows: Vec<DiscountWindowArg>
 }
 
+///
+/// Args passed to the method icrc7_mint
+/// 
 #[derive(CandidType, Deserialize)]
 pub struct MintArg {
     pub to : Account,
@@ -153,7 +178,10 @@ pub struct MintArg {
     pub token_privilege_code: Option<u8>
   }
 
-  #[derive(CandidType, Deserialize, Debug)]
+  ///
+  /// Types of possible Errors the project can return
+  /// 
+#[derive(CandidType, Deserialize, Debug)]
 pub enum Errors {
     GenericError { message : String, error_code : u128 },
     SupplyCapReached,
@@ -163,7 +191,9 @@ pub enum Errors {
     TokenIdAlreadyExist,
 }
 
-
+///
+/// Full information about a collection
+/// 
 #[derive(Debug, Serialize, Deserialize, CandidType, Clone)]
 pub struct CollectionFullInfo {
     pub owner: Principal,
@@ -174,6 +204,9 @@ pub struct CollectionFullInfo {
     pub nfts: Vec<CollectionNfts>
 }
 
+///
+/// Part of indormations about a collection
+/// 
 #[derive(Debug, Serialize, Deserialize, CandidType, Clone)]
 pub struct CollectionInfo {
     pub owner: Principal,
@@ -200,6 +233,9 @@ impl Storable for CollectionInfo {
     };
 }
 
+///
+/// Args for transfering tokens
+/// 
 #[derive(CandidType, Deserialize, Serialize, Clone)]
 pub struct TransferArgs {
     pub amount: icrc_ledger_types::icrc1::transfer::NumTokens,
@@ -207,6 +243,9 @@ pub struct TransferArgs {
     pub collection_id: String
 }
 
+///
+/// Possible Errors of the transfer method
+/// 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum TransferError {
     NonExistingTokenId,
@@ -219,6 +258,9 @@ pub enum TransferError {
     GenericBatchError { error_code: u128, message: String },
 }
 
+///
+/// Transfer args for transfering NFT
+/// 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct IcrcTransferArg {
     pub from_subaccount: Option<[u8; 32]>,
