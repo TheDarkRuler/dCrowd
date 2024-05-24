@@ -1,4 +1,4 @@
-# dCrows
+# dCrowd
 
 A decentralized marketplace based on blockchain (written in Rust and compiled to WebAssembly for execution on the Internet Computer Protocol) that allows for the creation and sale of NFTs (based on ICRC-7 and other standards) to fund events. This platform uses NFTs as tools for crowdfunding, enabling event organizers to raise funds directly from the community. NFT buyers receive special rights or exclusive benefits related to the supported events in return, such as priority access or special content. The platform is designed to ensure transparency and security in transactions, using smart contracts to automate the distribution of funds and rewards in a fair and efficient manner.
 
