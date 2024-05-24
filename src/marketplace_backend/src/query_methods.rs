@@ -30,7 +30,7 @@ pub fn get_collection_ids(caller: Option<String>, offset: u32, limit: u32) -> Re
 
     let res = get_collections()
         .iter()
-        .filter(|x| (*x.1).owner == caller)
+        .filter(|x| x.1.owner == caller)
         .map(|x| x.0.to_string())
         .skip(offset as usize)
         .take(limit as usize)
@@ -86,7 +86,7 @@ pub fn get_collections_info_by_caller(caller: Option<String>, offset: u32, limit
 
     let res = get_collections()
         .iter()
-        .filter(|x| (*x.1).owner == caller)
+        .filter(|x| x.1.owner == caller)
         .map(|x| CollectionFullInfo { 
             owner: caller, 
             canister_id: *x.0, 
@@ -128,7 +128,7 @@ pub fn get_all_collections(offset: u32, limit: u32) -> Result<Vec<CollectionFull
         .skip(offset as usize)
         .take(limit as usize)
         .collect::<Vec<CollectionFullInfo>>();
-    if res.len() == 0 {
+    if res.is_empty() {
         return Err("no collections present".to_string())
     }
     Ok(res)
@@ -154,7 +154,7 @@ pub fn get_all_nfts(offset: u32, limit: u32) -> Result<HashMap<OwnersDoubleKey, 
         .take(limit as usize)
         .map(|x| (*x.0, *x.1))
         .collect::<HashMap<OwnersDoubleKey, NftMarketData>>();
-    if res.len() == 0 {
+    if res.is_empty() {
         return Err("no collections present".to_string())
     }
     Ok(res)

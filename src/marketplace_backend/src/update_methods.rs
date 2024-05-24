@@ -40,7 +40,7 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
     }
 
     for x in arg.discount_windows.iter() {
-        if (*x).expire_date >= arg.expire_date || (*x).expire_date <= ic_cdk::api::time() {
+        if x.expire_date >= arg.expire_date || x.expire_date <= ic_cdk::api::time() {
             return Err(Errors::GenericError { 
                 message: "Error: discount windows date cannot be in the past or it cannot be after the expire date".to_string(), 
                 error_code: 400
@@ -77,22 +77,22 @@ pub async fn create_collection_nfts(arg: Arg) -> Result<String, Errors> {
             memo: None,
             token_id: tkn_id,
             from_subaccount: None,
-            token_description: Some((*x).token_description.clone()),
-            token_logo: Some((*x).token_logo.clone()),
-            token_name: Some((*x).token_name.clone()),
-            token_privilege_code: Some((*x).token_privilege_code.clone()),
+            token_description: Some(x.token_description.clone()),
+            token_logo: Some(x.token_logo.clone()),
+            token_name: Some(x.token_name.clone()),
+            token_privilege_code: Some(x.token_privilege_code),
         };
         let mut tkn_ids:Vec<u64> = Vec::new();
         for _ in 0..x.quantity {
 
             tkn_ids.push(tkn_id as u64);
 
-            let (mint_result,): (Result<u128, Errors>,) = ic_cdk::call(canister_id.clone(), "icrc7_mint", (&mint_arg, caller,))
+            let (mint_result,): (Result<u128, Errors>,) = ic_cdk::call(canister_id, "icrc7_mint", (&mint_arg, caller,))
             .await
             .expect("Error in minting NFT");
 
             if mint_result.is_err() {
-                return Err(mint_result.err().expect("error message not loaded"));
+                return Err(mint_result.expect_err("error message not loaded"));
             }
             insert_nft_record(canister_id, tkn_id as u64, caller, Some(x.price), true);
             tkn_id += 1;
@@ -202,13 +202,10 @@ pub async fn transfer_nft(args: TransferArgs) -> Result<String, String> {
     .await
     .map_err(|e| format!("failed to call ledger: {:?}", e))?
     .0.first() {
-        Some(trasfer_el) => {
-            match trasfer_el {
-                Some(x) => x.clone(),
-                None => Err(TransferError::GenericError { error_code: 400, message: "error in transfering NFT".to_string() }),
-            }                        
+        Some(Some(trasfer_el)) => {
+            trasfer_el.clone()
         },
-        None => Err(TransferError::GenericError { error_code: 400, message: "error in transfering NFT".to_string() })
+        _ => Err(TransferError::GenericError { error_code: 400, message: "error in transfering NFT".to_string() })
     };
 
     match transfer_nft {
@@ -216,6 +213,6 @@ pub async fn transfer_nft(args: TransferArgs) -> Result<String, String> {
             insert_nft_record(collection_id, args.tkn_id as u64, caller, None, false);
             Ok(format!("NFT with token id: {}, transferred from {} to {} correctly", args.tkn_id, owner_nft, caller))
         },
-        Err(e) => return Err(format!("Error in transfering NFT {:?}", e)),                
+        Err(e) => Err(format!("Error in transfering NFT {:?}", e)),                
     }
 }

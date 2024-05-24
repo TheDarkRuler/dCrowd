@@ -34,13 +34,13 @@ pub const ICRC7_WASM: &[u8] = std::include_bytes!("../../../wasm_files/icrc7.was
 pub async fn mint_collection_canister(arg: CanisterArg) -> Result<String, String> {
     let caller = ic_cdk::caller();
     let account = Account {
-        owner: caller.clone(),
+        owner: caller,
         subaccount: None,
     };
     let principal = match create_canister(
         CreateCanisterArgument {
             settings: Some(CanisterSettings {
-                controllers: Some(vec![ic_cdk::id(), caller.clone()]),
+                controllers: Some(vec![ic_cdk::id(), caller]),
                 compute_allocation: None,
                 memory_allocation: None,
                 freezing_threshold: None,

@@ -238,7 +238,6 @@ impl Storable for CollectionInfo {
 /// 
 #[derive(CandidType, Deserialize, Serialize, Clone)]
 pub struct TransferArgs {
-    pub amount: icrc_ledger_types::icrc1::transfer::NumTokens,
     pub tkn_id: u128,
     pub collection_id: String
 }
