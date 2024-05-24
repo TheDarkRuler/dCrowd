@@ -1,11 +1,11 @@
 # dCrows
 
-Un marketplace decentralizzato basato su blockchain (in Rust e compilata in WebAssembly per l'esecuzione su Internet Computer Protocol) che permette la creazione e la vendita di NFT (basandosi su standard ICRC-7 and others) per finanziare eventi. Questa piattaforma utilizza gli NFT come strumenti per il crowdfunding, consentendo agli organizzatori di eventi di raccogliere fondi direttamente dalla comunità. Gli acquirenti degli NFT ricevono in cambio diritti particolari o benefici esclusivi legati agli eventi supportati, come accesso prioritario o contenuti speciali. La piattaforma è costruita per garantire trasparenza e sicurezza nelle transazioni, utilizzando smart contracts per automatizzare la distribuzione dei fondi e dei premi in modo equo ed efficiente.
+A decentralized marketplace based on blockchain (written in Rust and compiled to WebAssembly for execution on the Internet Computer Protocol) that allows for the creation and sale of NFTs (based on ICRC-7 and other standards) to fund events. This platform uses NFTs as tools for crowdfunding, enabling event organizers to raise funds directly from the community. NFT buyers receive special rights or exclusive benefits related to the supported events in return, such as priority access or special content. The platform is designed to ensure transparency and security in transactions, using smart contracts to automate the distribution of funds and rewards in a fair and efficient manner.
 
 If you want to start working on your project right away, you might want to try the following commands:
 
 ```bash
-cd icrc7/
+cd dCrowd/
 dfx help
 dfx canister --help
 ```
