@@ -3,11 +3,11 @@ use ic_cdk_macros::update;
 
 use crate::{
     guards::owner_guard, state::STATE, BurnArg, BurnResult, MintArg, MintResult, TransferArg,
-    TransferResult,
+    TransferResult, guards::authenticated_guard
 };
 use icrc_ledger_types::icrc1::account::Account;
 
-#[update]
+#[update(guard = "authenticated_guard")]
 pub fn icrc7_mint(arg: MintArg, caller: Option<Principal>) -> MintResult {
     let caller = match caller {
         Some(x) => x,
@@ -23,7 +23,7 @@ pub fn icrc7_mint(arg: MintArg, caller: Option<Principal>) -> MintResult {
     STATE.with(|s| s.borrow_mut().mint(&caller, arg))
 }
 
-#[update]
+#[update(guard = "authenticated_guard")]
 pub fn icrc7_transfer(args: Vec<TransferArg>, caller: Option<Principal>) -> Vec<Option<TransferResult>> {
     let caller = match caller {
         Some(x) => x,
@@ -32,7 +32,7 @@ pub fn icrc7_transfer(args: Vec<TransferArg>, caller: Option<Principal>) -> Vec<
     STATE.with(|s| s.borrow_mut().icrc7_transfer(&caller, args))
 }
 
-#[update]
+#[update(guard = "authenticated_guard")]
 pub fn icrc7_burn(args: Vec<BurnArg>) -> Vec<Option<BurnResult>> {
     let caller = ic_cdk::caller();
     STATE.with(|s| s.borrow_mut().burn(&caller, args))

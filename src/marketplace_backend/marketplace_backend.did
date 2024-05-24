@@ -72,6 +72,7 @@ type SubAccount = blob;
 type Account = record { owner : principal; subaccount : opt SubAccount };
 
 type TransferArgs = record { 
+  amount : nat; 
   tkn_id : nat;
   collection_id : text;
 };

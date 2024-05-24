@@ -1,8 +1,8 @@
 use crate::state::STATE;
 use candid::Principal;
+use dotenv_codegen::dotenv;
 use ic_cdk::caller;
 
-#[inline(always)]
 pub fn owner_guard() -> Result<(), String> {
     let owner = STATE
         .with(|s| s.borrow().icrc1_minting_authority())
@@ -15,9 +15,9 @@ pub fn owner_guard() -> Result<(), String> {
     }
 }
 
-#[inline(always)]
 pub fn authenticated_guard() -> Result<(), String> {
-    if ic_cdk::caller() == Principal::anonymous() {
+    let caller = ic_cdk::caller();
+    if caller == Principal::anonymous() || caller.to_string() != dotenv!("CANISTER_ID_MARKETPLACE_BACKEND") {
         Err("anonymous user is not allowed".to_string())
     } else {
         Ok(())

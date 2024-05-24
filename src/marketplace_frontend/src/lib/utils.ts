@@ -86,7 +86,7 @@ export class Connection {
         return 
     }
   
-   /* // Checks balance of the caller and if ( balance >= fee + nftPrice ) then it returns the nftPrice 
+    // Checks balance of the caller and if ( balance >= fee + nftPrice ) then it returns the nftPrice 
     let nftPrice = await this.actorBackend.check_balance([], BigInt(nftId), collectionId)
   
     if ("Err" in nftPrice) {
@@ -112,9 +112,10 @@ export class Connection {
     if ("Err" in approval) {
         console.log(approval.Err)
         return
-    }*/
+    }
   
     let transferRes = await this.actorBackend.transfer_nft({
+        amount: nftPrice.Ok,
         tkn_id: BigInt(nftId),
         collection_id: collectionId
     })
