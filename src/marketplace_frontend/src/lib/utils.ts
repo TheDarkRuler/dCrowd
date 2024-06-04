@@ -95,22 +95,20 @@ export class Connection {
     }
   
     // Approves the backend canister to transfer token (ex. ICP) on caller behalf
-    let approval = await this.actorLedger.icrc2_approve({
+    let transfer = await this.actorLedger.icrc1_transfer({
       from_subaccount: [],
-      spender: {
+      to: {
         owner: Principal.fromText(process.env.CANISTER_ID_MARKETPLACE_BACKEND as string),
         subaccount: []
       },
       amount: nftPrice.Ok + await icp_ledger_canister.icrc1_fee(),
-      expected_allowance: [],
-      expires_at: [],
       fee: [],
       memo: [],
       created_at_time: [],
     })
   
-    if ("Err" in approval) {
-        console.log(approval.Err)
+    if ("Err" in transfer) {
+        console.log(transfer.Err)
         return
     }
   
